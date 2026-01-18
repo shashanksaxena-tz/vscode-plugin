@@ -1,0 +1,205 @@
+import { createClient } from "../utils/supabase";
+
+const COHORTS = [
+  {
+    name: "Over-prompters",
+    description: "Developers with high prompt volume but low acceptance rate.",
+    criteria: {
+        daily_prompt_count: ">50",
+        acceptance_rate: "<40%"
+    },
+    coaching_plan: "Focus on prompt specificity and decomposing complex tasks.",
+    check: (metrics: UserMetrics) => {
+        const avgPrompts = metrics.total_prompts / metrics.days_active;
+        const acceptanceRate = metrics.total_prompts > 0 ? metrics.accepted_count / metrics.total_prompts : 0;
+        return avgPrompts > 50 && acceptanceRate < 0.4;
+    }
+  },
+  {
+    name: "Context-light users",
+    description: "Developers who rarely include sufficient context files.",
+    criteria: {
+        avg_context_files: "<2"
+    },
+    coaching_plan: "Training on how to use @-mentions to include relevant files.",
+    check: (metrics: UserMetrics) => {
+        return metrics.avg_context_files < 2;
+    }
+  },
+  {
+    name: "Retry loopers",
+    description: "Developers who frequently retry prompts without editing.",
+    criteria: {
+        retry_rate: ">30%"
+    },
+    coaching_plan: "Workshop on task breakdown and iterative prompting.",
+    check: (metrics: UserMetrics) => {
+        const retryRate = metrics.total_prompts > 0 ? metrics.retry_count / metrics.total_prompts : 0;
+        return retryRate > 0.3;
+    }
+  }
+];
+
+interface UserMetrics {
+    user_id: string;
+    total_prompts: number;
+    accepted_count: number;
+    retry_count: number;
+    days_active: number;
+    avg_context_files: number;
+}
+
+export async function cohortDetection() {
+  console.log("Starting cohort detection job...");
+  const supabase = createClient();
+
+  // 1. Fetch aggregated metrics for the last 7 days
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const dateStr = sevenDaysAgo.toISOString().split('T')[0];
+
+  const { data: metricsData, error: metricsError } = await supabase
+    .from('daily_metrics')
+    .select('*')
+    .gte('date', dateStr);
+
+  if (metricsError) {
+    console.error("Error fetching daily metrics:", metricsError);
+    return;
+  }
+
+  if (!metricsData || metricsData.length === 0) {
+    console.log("No metrics found for the last 7 days.");
+    return;
+  }
+
+  // 2. Aggregate per user
+  const userMetricsMap = new Map<string, UserMetrics>();
+
+  for (const row of metricsData) {
+    const userId = row.user_id;
+    if (!userMetricsMap.has(userId)) {
+        userMetricsMap.set(userId, {
+            user_id: userId,
+            total_prompts: 0,
+            accepted_count: 0,
+            retry_count: 0,
+            days_active: 0,
+            avg_context_files: 0
+        });
+    }
+
+    const m = userMetricsMap.get(userId)!;
+    m.total_prompts += row.total_prompts || 0;
+    m.accepted_count += row.accepted_count || 0;
+    m.retry_count += row.retry_count || 0;
+    m.days_active += 1;
+    // Weighted average for context files? Or just simple average of daily avgs?
+    // Let's do simple average of daily averages for now.
+    m.avg_context_files += row.context_avg_files || 0;
+  }
+
+  // Finalize averages
+  for (const m of userMetricsMap.values()) {
+      if (m.days_active > 0) {
+          m.avg_context_files = m.avg_context_files / m.days_active;
+      }
+  }
+
+  // 3. Evaluate cohorts
+  for (const cohortDef of COHORTS) {
+    console.log(`Processing cohort: ${cohortDef.name}`);
+
+    // Check if cohort exists
+    const { data: existingCohort, error: fetchError } = await supabase
+        .from('cohorts')
+        .select('id')
+        .eq('name', cohortDef.name)
+        .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "The result contains 0 rows"
+         console.error(`Error fetching cohort ${cohortDef.name}:`, fetchError);
+         continue;
+    }
+
+    let cohortId;
+    if (existingCohort) {
+        cohortId = existingCohort.id;
+        // Update details
+        await supabase
+            .from('cohorts')
+            .update({
+                description: cohortDef.description,
+                criteria: cohortDef.criteria,
+                coaching_plan: cohortDef.coaching_plan,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', cohortId);
+    } else {
+        // Insert new
+        const { data: newCohort, error: insertError } = await supabase
+            .from('cohorts')
+            .insert({
+                name: cohortDef.name,
+                description: cohortDef.description,
+                criteria: cohortDef.criteria,
+                coaching_plan: cohortDef.coaching_plan,
+                updated_at: new Date().toISOString()
+            })
+            .select('id')
+            .single();
+
+        if (insertError || !newCohort) {
+            console.error(`Error creating cohort ${cohortDef.name}:`, insertError);
+            continue;
+        }
+        cohortId = newCohort.id;
+    }
+    let memberCount = 0;
+
+    // Identify members
+    for (const userMetrics of userMetricsMap.values()) {
+        if (cohortDef.check(userMetrics)) {
+            // Add to cohort
+            const { error: memberError } = await supabase
+                .from('cohort_members')
+                .upsert({
+                    cohort_id: cohortId,
+                    user_id: userMetrics.user_id,
+                    joined_at: new Date().toISOString() // In reality, we might want to keep original joined_at
+                }, { onConflict: 'cohort_id,user_id' }); // Conflict on PK
+
+            if (memberError) {
+                console.error(`Error adding user ${userMetrics.user_id} to cohort ${cohortDef.name}:`, memberError);
+            } else {
+                memberCount++;
+            }
+        } else {
+            // Remove from cohort if they no longer match?
+            // For now, let's assume we clean up or just add new ones.
+            // If we want to remove, we'd need to check if they are in it and remove.
+            // Let's implement removal for correctness.
+            const { error: removeError } = await supabase
+                .from('cohort_members')
+                .delete()
+                .eq('cohort_id', cohortId)
+                .eq('user_id', userMetrics.user_id);
+
+            if (removeError) {
+                 // console.error(`Error removing user ${userMetrics.user_id} from cohort ${cohortDef.name}:`, removeError);
+                 // It's okay if they weren't in it.
+            }
+        }
+    }
+
+    // Update member count
+    await supabase
+        .from('cohorts')
+        .update({ member_count: memberCount })
+        .eq('id', cohortId);
+
+    console.log(`Cohort ${cohortDef.name} updated with ${memberCount} members.`);
+  }
+
+  console.log("Cohort detection job completed.");
+}
