@@ -1,0 +1,19 @@
+{
+  "name": "cursor-analytics-hooks",
+  "version": "1.0.0",
+  "description": "Cursor hooks for analytics",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.79.0",
+    "crypto-js": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/crypto-js": "^4.2.0",
+    "typescript": "^5.4.0"
+  }
+}
