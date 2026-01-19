@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.next/
+analytics-dashboard/.next/
+batch-processor/dist/
+copilot-analytics-intellij/.gradle/
+copilot-analytics-intellij/build/
+copilot-analytics-intellij/.intellijPlatform/
