@@ -1,0 +1,47 @@
+<idea-plugin>
+    <id>com.copilotanalytics.intellij</id>
+    <name>Copilot Analytics</name>
+    <vendor>Your Organization</vendor>
+    <description>Track and analyze GitHub Copilot usage for organizational insights</description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends optional="true" config-file="java-features.xml">com.intellij.modules.java</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Application-level service for telemetry -->
+        <applicationService
+            serviceImplementation="com.copilotanalytics.services.TelemetryService"/>
+
+        <!-- Project-level settings -->
+        <projectService
+            serviceImplementation="com.copilotanalytics.settings.PluginSettings"/>
+
+        <!-- Completion contributor to observe completions -->
+        <completion.contributor
+            language="any"
+            implementationClass="com.copilotanalytics.listeners.CompletionListener"
+            order="last"/>
+
+        <!-- Startup activity -->
+        <postStartupActivity
+            implementation="com.copilotanalytics.CopilotAnalyticsStartup"/>
+    </extensions>
+
+    <applicationListeners>
+        <!-- Listen for editor events -->
+        <!-- Note: EditorTypingListener is not yet implemented in code blocks provided, skipping for now or will implement dummy -->
+        <!--
+        <listener
+            class="com.copilotanalytics.listeners.EditorTypingListener"
+            topic="com.intellij.openapi.editor.actionSystem.TypedActionHandler"/>
+        -->
+    </applicationListeners>
+
+    <projectListeners>
+        <!-- Document change listener -->
+        <listener
+            class="com.copilotanalytics.listeners.DocumentChangeListener"
+            topic="com.intellij.openapi.editor.event.DocumentListener"/>
+    </projectListeners>
+</idea-plugin>
