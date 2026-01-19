@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": "node",
+        "args": ["./cursor-analytics-hooks/dist/index.js", "beforeSubmitPrompt"]
+      }
+    ],
+    "afterMCPExecution": [
+      {
+        "command": "node",
+        "args": ["./cursor-analytics-hooks/dist/index.js", "afterMCPExecution"]
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "node",
+        "args": ["./cursor-analytics-hooks/dist/index.js", "afterFileEdit"]
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node",
+        "args": ["./cursor-analytics-hooks/dist/index.js", "sessionEnd"]
+      }
+    ]
+  }
+}
