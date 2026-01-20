@@ -1,0 +1,312 @@
+
+> batch-processor@1.0.0 test
+> jest
+
+PASS src/jobs/cohortDetectionWithEmail.test.ts (10.331 s)
+  ● Console
+
+    console.log
+      Starting cohort detection job...
+
+      at cohortDetection (src/jobs/cohortDetection.ts:55:11)
+
+    console.log
+      Processing cohort: Over-prompters
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Sent notification email to user_new@example.com for cohort Over-prompters
+
+      at cohortDetection (src/jobs/cohortDetection.ts:217:33)
+
+    console.log
+      Cohort Over-prompters updated with 1 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Processing cohort: Context-light users
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Sent notification email to user_new@example.com for cohort Context-light users
+
+      at cohortDetection (src/jobs/cohortDetection.ts:217:33)
+
+    console.log
+      Cohort Context-light users updated with 1 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Processing cohort: Retry loopers
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Retry loopers updated with 0 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Cohort detection job completed.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:244:11)
+
+PASS src/jobs/cohortDetection.test.ts (10.395 s)
+  ● Console
+
+    console.log
+      Starting cohort detection job...
+
+      at cohortDetection (src/jobs/cohortDetection.ts:55:11)
+
+    console.log
+      Processing cohort: Over-prompters
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Mocking email send: {
+        to: 'user1@example.com',
+        subject: "Copilot Analytics: You've been added to the Over-prompters cohort",
+        html: '\n' +
+          '                                <h2>Cohort Notification</h2>\n' +
+          '                                <p>Based on your recent usage patterns, you have been identified as part of the <strong>Over-prompters</strong> group.</p>\n' +
+          '                                <p><strong>Description:</strong> Developers with high prompt volume but low acceptance rate.</p>\n' +
+          '                                <p><strong>Coaching Plan:</strong> Focus on prompt specificity and decomposing complex tasks.</p>\n' +
+          '                                <p>Check your dashboard for more details.</p>\n' +
+          '                            '
+      }
+
+      at EmailService.sendEmail (src/services/email.ts:32:25)
+
+    console.log
+      Sent notification email to user1@example.com for cohort Over-prompters
+
+      at cohortDetection (src/jobs/cohortDetection.ts:217:33)
+
+    console.log
+      Cohort Over-prompters updated with 1 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Processing cohort: Context-light users
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Context-light users updated with 0 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Processing cohort: Retry loopers
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Retry loopers updated with 0 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Cohort detection job completed.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:244:11)
+
+    console.log
+      Starting cohort detection job...
+
+      at cohortDetection (src/jobs/cohortDetection.ts:55:11)
+
+    console.log
+      Processing cohort: Over-prompters
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Over-prompters updated with 0 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Processing cohort: Context-light users
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Mocking email send: {
+        to: 'user2@example.com',
+        subject: "Copilot Analytics: You've been added to the Context-light users cohort",
+        html: '\n' +
+          '                                <h2>Cohort Notification</h2>\n' +
+          '                                <p>Based on your recent usage patterns, you have been identified as part of the <strong>Context-light users</strong> group.</p>\n' +
+          '                                <p><strong>Description:</strong> Developers who rarely include sufficient context files.</p>\n' +
+          '                                <p><strong>Coaching Plan:</strong> Training on how to use @-mentions to include relevant files.</p>\n' +
+          '                                <p>Check your dashboard for more details.</p>\n' +
+          '                            '
+      }
+
+      at EmailService.sendEmail (src/services/email.ts:32:25)
+
+    console.log
+      Sent notification email to user2@example.com for cohort Context-light users
+
+      at cohortDetection (src/jobs/cohortDetection.ts:217:33)
+
+    console.log
+      Cohort Context-light users updated with 1 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Processing cohort: Retry loopers
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Retry loopers updated with 0 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Cohort detection job completed.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:244:11)
+
+    console.log
+      Starting cohort detection job...
+
+      at cohortDetection (src/jobs/cohortDetection.ts:55:11)
+
+    console.log
+      Processing cohort: Over-prompters
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Over-prompters updated with 1 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Processing cohort: Context-light users
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Context-light users updated with 0 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Processing cohort: Retry loopers
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Retry loopers updated with 0 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Cohort detection job completed.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:244:11)
+
+PASS src/jobs/e2eFlow.test.ts (10.75 s)
+  ● Console
+
+    console.log
+      Aggregating metrics for 2026-01-20...
+
+      at aggregateMetrics (src/jobs/aggregateMetrics.ts:7:11)
+
+    console.log
+      Metrics aggregation complete.
+
+      at aggregateMetrics (src/jobs/aggregateMetrics.ts:16:13)
+
+    console.log
+      Running rule-based scoring...
+
+      at ruleBasedScoring (src/jobs/ruleBasedScoring.ts:9:11)
+
+    console.log
+      Starting cohort detection job...
+
+      at cohortDetection (src/jobs/cohortDetection.ts:55:11)
+
+    console.log
+      Processing cohort: Over-prompters
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Over-prompters updated with 0 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Processing cohort: Context-light users
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Context-light users updated with 1 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Processing cohort: Retry loopers
+
+      at cohortDetection (src/jobs/cohortDetection.ts:114:13)
+
+    console.log
+      Cohort Retry loopers updated with 0 members.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:241:13)
+
+    console.log
+      Cohort detection job completed.
+
+      at cohortDetection (src/jobs/cohortDetection.ts:244:11)
+
+    console.log
+      Full E2E simulation passed successfully
+
+      at Object.<anonymous> (src/jobs/e2eFlow.test.ts:123:17)
+
+PASS src/providers/anthropic.test.ts
+PASS src/services/email.test.ts
+  ● Console
+
+    console.log
+      Email sent: 123
+
+      at EmailService.sendEmail (src/services/email.ts:43:21)
+
+PASS src/jobs/llmAnalysis.test.ts
+  ● Console
+
+    console.log
+      Analyzed user user1: score 87
+
+      at llmAnalysis (src/jobs/llmAnalysis.ts:92:15)
+
+    console.log
+      Analyzed user user1: score 62
+
+      at llmAnalysis (src/jobs/llmAnalysis.ts:92:15)
+
+PASS src/utils/audit.test.ts
+
+Test Suites: 7 passed, 7 total
+Tests:       17 passed, 17 total
+Snapshots:   0 total
+Time:        13.062 s
+Ran all test suites.

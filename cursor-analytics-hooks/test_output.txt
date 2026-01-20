@@ -1,0 +1,13 @@
+
+> cursor-analytics-hooks@1.0.0 test
+> jest
+
+PASS src/index.test.ts (8.927 s)
+  Cursor Hooks CLI
+    ✓ should handle unknown hook type gracefully (return empty object) (6072 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        9.285 s
+Ran all test suites.
