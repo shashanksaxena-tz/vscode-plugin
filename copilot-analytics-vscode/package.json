@@ -1,0 +1,62 @@
+{
+  "name": "copilot-analytics",
+  "displayName": "Copilot Analytics",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "copilot-analytics.showScore",
+        "title": "Show My Copilot Score"
+      }
+    ],
+    "configuration": {
+      "title": "Copilot Analytics",
+      "properties": {
+        "copilotAnalytics.enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "copilotAnalytics.supabaseUrl": {
+          "type": "string"
+        },
+        "copilotAnalytics.supabaseAnonKey": {
+          "type": "string"
+        },
+        "copilotAnalytics.encryptionKey": {
+          "type": "string",
+          "description": "Key used to encrypt sensitive prompt data before sending to Supabase."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "vscode:prepublish": "npm run package",
+    "package": "npm run compile"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.3",
+    "crypto-js": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
+    "esbuild": "^0.19.11",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  }
+}
