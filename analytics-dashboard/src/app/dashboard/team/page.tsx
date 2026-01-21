@@ -20,7 +20,10 @@ export default async function TeamDashboardPage() {
     return <div className="p-8 text-red-600">Error loading user profile. Please contact support.</div>;
   }
 
-  if (currentUserData.role !== 'manager' && currentUserData.role !== 'admin') {
+  // Explicitly check for role property existence due to potential type inference issues
+  const userRole = (currentUserData as any).role;
+
+  if (userRole !== 'manager' && userRole !== 'admin') {
     redirect("/dashboard");
   }
 
@@ -30,9 +33,10 @@ export default async function TeamDashboardPage() {
   try {
     let query = supabase.from("users").select("*");
 
-    if (currentUserData.role === 'manager') {
-      if (currentUserData.department) {
-        query = query.eq("department", currentUserData.department);
+    if (userRole === 'manager') {
+      const userDepartment = (currentUserData as any).department;
+      if (userDepartment) {
+        query = query.eq("department", userDepartment);
       } else {
         // If manager has no department, show users with no department?
         // Or show all? Let's assume users with no department.
@@ -46,7 +50,7 @@ export default async function TeamDashboardPage() {
     if (usersFetchError) throw usersFetchError;
 
     if (usersData && usersData.length > 0) {
-      const userEmails = usersData.map(u => u.email);
+      const userEmails = usersData.map(u => (u as any).email);
 
       // Fetch scores for these users
       const { data: scoresData, error: scoresError } = await supabase
@@ -59,11 +63,11 @@ export default async function TeamDashboardPage() {
 
       // Map scores to users
       teamMembers = usersData.map(member => {
-        const memberScores = scoresData?.filter(s => s.user_id === member.email) || [];
+        const memberScores = scoresData?.filter(s => (s as any).user_id === (member as any).email) || [];
         // Since we ordered by date desc, the first one is the latest
         const latestScore = memberScores.length > 0 ? memberScores[0] : null;
         return {
-          ...member,
+          ...(member as any),
           latest_score: latestScore
         };
       });
@@ -78,9 +82,9 @@ export default async function TeamDashboardPage() {
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Team Analytics</h1>
         <p className="text-gray-600">
-          {currentUserData.role === 'admin'
+          {(currentUserData as any).role === 'admin'
             ? 'All Users'
-            : `Department: ${currentUserData.department || 'Unassigned'}`}
+            : `Department: ${(currentUserData as any).department || 'Unassigned'}`}
         </p>
         {error && (
           <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md border border-red-200">
