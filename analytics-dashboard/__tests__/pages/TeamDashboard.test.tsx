@@ -91,10 +91,11 @@ describe('TeamDashboardPage', () => {
               data: { role: 'manager', department: 'Engineering' },
               error: null
             }),
+            returns: jest.fn().mockResolvedValue({
+              data: mockUsers,
+              error: null
+            }),
             then: jest.fn().mockImplementation((resolve) => {
-                // If single wasn't called (which returns a promise directly in this mock setup usually,
-                // but here single returns a promise.
-                // But await query triggers .then() on the chain object.
                 resolve({ data: mockUsers, error: null });
             })
           };
@@ -108,9 +109,11 @@ describe('TeamDashboardPage', () => {
           return {
             select: jest.fn().mockReturnValue({
               in: jest.fn().mockReturnValue({
-                order: jest.fn().mockResolvedValue({
-                  data: mockScores,
-                  error: null
+                order: jest.fn().mockReturnValue({
+                  returns: jest.fn().mockResolvedValue({
+                    data: mockScores,
+                    error: null
+                  })
                 }),
               }),
             }),
