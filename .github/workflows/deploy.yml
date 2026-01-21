@@ -1,0 +1,27 @@
+name: Deploy to Staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        # This step requires secrets to be configured in the repository
+        # STAGING_HOST, STAGING_USERNAME, SSH_PRIVATE_KEY
+        uses: appleboy/ssh-action@master
+        if: ${{ secrets.STAGING_HOST != '' }}
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/copilot-analytics
+            git pull origin main
+            chmod +x scripts/deploy.sh
+            ./scripts/deploy.sh
