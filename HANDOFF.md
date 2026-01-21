@@ -3,30 +3,31 @@
 ## Context
 **Project**: Copilot Analytics & Coaching Platform
 **Date**: January 21, 2026
-**Agent**: Jules (Session 26)
+**Agent**: Jules (Session 27)
 
 ## Achievements
-- **Dashboard**:
-    - Implemented `analytics-dashboard/src/app/dashboard/team/page.tsx` (Manager View) which filters team members by department.
-    - Created `analytics-dashboard/src/components/TeamTable.tsx` to display team metrics.
-    - Added unit tests for Manager Dashboard and Team Table.
-    - Verified frontend visualization using Playwright.
-    - Upgraded Next.js to `14.2.23` to address security vulnerabilities.
-- **CI/CD**:
-    - Added `test-intellij-plugin` job to `.github/workflows/ci.yml` using Java 21.
-    - Verified Gradle build and tests pass locally.
+- **Deployment**:
+    - Implemented deployment scripts (`scripts/deploy.sh`) and production Docker Compose configuration (`docker-compose.prod.yml`).
+    - Added GitHub Actions workflow (`.github/workflows/deploy.yml`) for automated deployment via SSH.
+    - Created `docs/deployment.md` with detailed instructions.
+- **Verification & Fixes**:
+    - Fixed build errors in `analytics-dashboard` by implementing strict type-safe Supabase queries using `.returns<T>()`.
+    - Verified `analytics-dashboard` and `batch-processor` builds successfully (compilation and static page generation).
+    - Verified `analytics-dashboard` tests pass with updated mocks matching the new type-safe implementation.
 
 ## State of Play
 - **Codebase**:
-    - Dashboard now has Developer, Manager, and Admin views implemented and tested.
-    - CI/CD covers all 5 components: Dashboard, Batch Processor, VS Code Extension, Cursor Hooks, IntelliJ Plugin.
-- **Environment**: "Diff size is unusually large" warning persists.
-- **Missing Components**:
-    - None identified in current scope.
+    - Dashboard and Batch Processor are buildable and tested.
+    - Deployment pipeline is configured.
+- **Environment**:
+    - Current sandbox environment lacks Docker daemon permissions, preventing local `docker compose up` verification.
+- **Known Issues**:
+    - `npm install` runs may modify `package-lock.json` significantly; use `npm ci` where possible or be careful with verifying lockfile changes.
 
 ## Next Steps for Next Agent
-1.  **End-to-End Verification**:
-    - Run `docker compose up` in a capable environment to verify full system integration (Dashboard + Batch Processor + Supabase).
+1.  **End-to-End Verification (Runtime)**:
+    - In an environment with Docker access, run `docker compose up` to verify runtime integration of Dashboard, Batch Processor, and Supabase.
     - Verify data flow from extensions to Supabase to Dashboard.
-2.  **Deployment**:
-    - Prepare deployment scripts or configuration for staging environment.
+2.  **Staging/Production Setup**:
+    - Configure the actual production server with the prerequisites listed in `docs/deployment.md`.
+    - Set up GitHub Secrets (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_KEY`, `DEPLOY_PORT`) to enable the CD pipeline.
