@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install dependencies
+      run: |
+        cd analytics-dashboard
+        npm ci --legacy-peer-deps
+    - name: Run tests
+      run: |
+        cd analytics-dashboard
+        npm test
+
+  test-batch-processor:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install dependencies
+      run: |
+        cd batch-processor
+        npm ci
+    - name: Run tests
+      run: |
+        cd batch-processor
+        npm test
+
+  test-cursor-hooks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install dependencies
+      run: |
+        cd cursor-analytics-hooks
+        npm ci
+    - name: Run tests
+      run: |
+        cd cursor-analytics-hooks
+        npm test
+
+  test-vscode-extension:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install dependencies
+      run: |
+        cd copilot-analytics-vscode
+        npm ci
+    - name: Run tests
+      run: |
+        cd copilot-analytics-vscode
+        npm test
