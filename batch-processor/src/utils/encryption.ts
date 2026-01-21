@@ -1,5 +1,5 @@
 import * as CryptoJS from 'crypto-js';
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 
 dotenv.config();
 

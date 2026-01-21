@@ -13,7 +13,6 @@
 - **Deployment**:
     - Created `scripts/deploy.sh` for production deployment (pull, build, health check).
     - Created `docker-compose.prod.yml` with production settings (restart policies, log rotation, `NODE_ENV=production`).
-    - Validated `batch-processor` uses `import * as` syntax for CommonJS compatibility.
 
 ## State of Play
 - **Codebase**:
