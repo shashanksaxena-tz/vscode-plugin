@@ -1,0 +1,50 @@
+
+> analytics-dashboard@1.0.0 test
+> jest
+
+PASS __tests__/components/MetricsChart.test.tsx
+PASS __tests__/components/AuditLogTable.test.tsx
+PASS __tests__/pages/AdminDashboard.test.tsx
+  ● Console
+
+    console.error
+      Unexpected error loading admin dashboard: TypeError: supabase.from is not a function
+          at from (/app/analytics-dashboard/src/app/dashboard/admin/page.tsx:23:8)
+          at Object.<anonymous> (/app/analytics-dashboard/__tests__/pages/AdminDashboard.test.tsx:40:7)
+
+      51 |
+      52 |   } catch (e) {
+    > 53 |     console.error("Unexpected error loading admin dashboard:", e);
+         |             ^
+      54 |     // If it was a redirect error (from Next.js), rethrow it
+      55 |     if ((e as any)?.digest?.startsWith('NEXT_REDIRECT')) {
+      56 |         throw e;
+
+      at error (src/app/dashboard/admin/page.tsx:53:13)
+      at Object.<anonymous> (__tests__/pages/AdminDashboard.test.tsx:40:7)
+
+    console.error
+      Unexpected error loading admin dashboard: TypeError: supabase.from(...).select(...).order is not a function
+          at order (/app/analytics-dashboard/src/app/dashboard/admin/page.tsx:42:8)
+          at Object.<anonymous> (/app/analytics-dashboard/__tests__/pages/AdminDashboard.test.tsx:69:7)
+
+      51 |
+      52 |   } catch (e) {
+    > 53 |     console.error("Unexpected error loading admin dashboard:", e);
+         |             ^
+      54 |     // If it was a redirect error (from Next.js), rethrow it
+      55 |     if ((e as any)?.digest?.startsWith('NEXT_REDIRECT')) {
+      56 |         throw e;
+
+      at error (src/app/dashboard/admin/page.tsx:53:13)
+      at Object.<anonymous> (__tests__/pages/AdminDashboard.test.tsx:69:7)
+
+PASS __tests__/components/SuggestionsList.test.tsx
+PASS __tests__/ScoreCard.test.tsx
+PASS __tests__/components/ImprovementSuggestions.test.tsx
+
+Test Suites: 6 passed, 6 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        2.094 s
+Ran all test suites.
