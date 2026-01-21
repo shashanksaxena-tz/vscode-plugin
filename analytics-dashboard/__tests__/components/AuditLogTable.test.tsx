@@ -21,6 +21,7 @@ describe('AuditLogTable', () => {
         action: 'login',
         target_resource: 'auth',
         details: { ip: '127.0.0.1' },
+        ip_address: '127.0.0.1',
         created_at: '2024-01-01T10:00:00Z',
       },
       {
@@ -29,6 +30,7 @@ describe('AuditLogTable', () => {
         action: 'delete_user',
         target_resource: 'user_123',
         details: {},
+        ip_address: null,
         created_at: '2024-01-01T11:00:00Z',
       },
     ];
