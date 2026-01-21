@@ -37,7 +37,7 @@ export class SupabaseService {
 
     const { error } = await this.client
       .from('events')
-      .insert(records);
+      .insert(records as any);
 
     if (error) throw error;
   }
@@ -51,6 +51,6 @@ export class SupabaseService {
       .single();
 
     if (error) return 0;
-    return data?.overall_score || 0;
+    return (data as any)?.overall_score || 0;
   }
 }

@@ -49,7 +49,7 @@ function runHook(hookType: string, input: object): Promise<string> {
 
 describe('Cursor Hooks CLI', () => {
     // Increase timeout for spawning processes
-    jest.setTimeout(10000);
+    jest.setTimeout(30000);
 
     test('should handle unknown hook type gracefully (return empty object)', async () => {
         const result = await runHook('unknownHook', { foo: 'bar' });
