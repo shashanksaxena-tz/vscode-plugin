@@ -36,6 +36,12 @@ describe('AdminDashboardPage', () => {
       },
     });
 
+    mockRedirect.mockImplementation(() => {
+        const error = new Error('NEXT_REDIRECT');
+        (error as any).digest = 'NEXT_REDIRECT';
+        throw error;
+    });
+
     try {
       await AdminDashboardPage();
     } catch (e) {
@@ -63,6 +69,12 @@ describe('AdminDashboardPage', () => {
           }),
         }),
       }),
+    });
+
+    mockRedirect.mockImplementation(() => {
+        const error = new Error('NEXT_REDIRECT');
+        (error as any).digest = 'NEXT_REDIRECT';
+        throw error;
     });
 
     try {
