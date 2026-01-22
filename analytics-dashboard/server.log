@@ -2,17 +2,21 @@
 > analytics-dashboard@1.0.0 dev
 > next dev
 
-   ▲ Next.js 14.0.4
-   - Local:        http://localhost:3000
-   - Environments: .env.local
+  ▲ Next.js 14.2.23
+  - Local:        http://localhost:3000
+  - Environments: .env.local
 
+ ✓ Starting...
 Attention: Next.js now collects completely anonymous telemetry regarding usage.
 This information is used to shape Next.js' roadmap and prioritize features.
 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
 https://nextjs.org/telemetry
 
- ✓ Ready in 2.8s
- ○ Compiling /verify-team-table ...
- ✓ Compiled /verify-team-table in 4.9s (428 modules)
- ✓ Compiled in 605ms (216 modules)
-[?25h
+ ✓ Ready in 1957ms
+ ○ Compiling /verify-cohort ...
+ ✓ Compiled /verify-cohort in 6.5s (468 modules)
+ ✓ Compiled in 600ms (236 modules)
+ GET /verify-cohort 200 in 7190ms
+ GET /verify-cohort 200 in 49ms
+ GET /verify-cohort 200 in 34ms
+ ✓ Compiled in 1809ms (244 modules)

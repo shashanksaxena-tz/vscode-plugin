@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ScoreCard } from "@/components/ScoreCard";
 import { MetricsChart } from "@/components/MetricsChart";
 import { SuggestionsList } from "@/components/SuggestionsList";
+import { CoachingPlanCard } from "@/components/CoachingPlanCard";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -13,6 +14,7 @@ export default async function DashboardPage() {
   let latestScore: any = null;
   let scoreHistory: any[] = [];
   let dailyMetrics: any[] = [];
+  let userCohorts: any[] = [];
   let error: string | null = null;
 
   try {
@@ -54,6 +56,27 @@ export default async function DashboardPage() {
 
     if (metricsError) console.error("Error fetching metrics:", metricsError);
     dailyMetrics = metricsData || [];
+
+    // Fetch user cohorts
+    const { data: cohortMembersData, error: cohortError } = await supabase
+      .from("cohort_members")
+      .select("cohort_id")
+      .eq("user_id", user.email!);
+
+    if (cohortError) console.error("Error fetching cohorts:", cohortError);
+
+    if (cohortMembersData && cohortMembersData.length > 0) {
+      const cohortIds = cohortMembersData.map(c => c.cohort_id);
+
+      const { data: cohortsData, error: cohortsFetchError } = await supabase
+        .from("cohorts")
+        .select("name, description, coaching_plan")
+        .in("id", cohortIds);
+
+      if (cohortsFetchError) console.error("Error fetching cohort details:", cohortsFetchError);
+
+      userCohorts = cohortsData || [];
+    }
 
   } catch (e) {
     console.error("Unexpected error loading dashboard data:", e);
@@ -112,6 +135,8 @@ export default async function DashboardPage() {
           />
         </div>
       </div>
+
+      <CoachingPlanCard cohorts={userCohorts} />
 
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Improvement Suggestions</h2>
