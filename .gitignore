@@ -60,3 +60,7 @@ supabase/.temp/
 # Custom
 *_output.txt
 **/localPlatformArtifacts/
+.env.verify
+*.log
+playwright-report/
+test-results/
