@@ -3,30 +3,30 @@
 ## Context
 **Project**: Copilot Analytics & Coaching Platform
 **Date**: January 21, 2026
-**Agent**: Jules (Session 26)
+**Agent**: Jules (Session 35)
 
 ## Achievements
-- **Dashboard**:
-    - Implemented `analytics-dashboard/src/app/dashboard/team/page.tsx` (Manager View) which filters team members by department.
-    - Created `analytics-dashboard/src/components/TeamTable.tsx` to display team metrics.
-    - Added unit tests for Manager Dashboard and Team Table.
-    - Verified frontend visualization using Playwright.
-    - Upgraded Next.js to `14.2.23` to address security vulnerabilities.
-- **CI/CD**:
-    - Added `test-intellij-plugin` job to `.github/workflows/ci.yml` using Java 21.
-    - Verified Gradle build and tests pass locally.
+- **Monitoring & Observability**:
+    - Implemented Prometheus metrics for `batch-processor` (custom job duration/errors) and `analytics-dashboard` (Node.js metrics via `/api/metrics`).
+    - Configured Grafana provisioning (`grafana/provisioning`) to automatically load datasources and dashboards.
+    - Created `grafana/dashboards/copilot_analytics.json` visualizing Batch Job Duration, Errors, Memory, and CPU usage.
+    - Updated `docker-compose.prod.yml` to mount Grafana configuration and persist data.
+- **Maintenance**:
+    - Merged changes from Session 34.
+    - Verified builds for `analytics-dashboard` and `batch-processor`.
 
 ## State of Play
 - **Codebase**:
-    - Dashboard now has Developer, Manager, and Admin views implemented and tested.
-    - CI/CD covers all 5 components: Dashboard, Batch Processor, VS Code Extension, Cursor Hooks, IntelliJ Plugin.
-- **Environment**: "Diff size is unusually large" warning persists.
-- **Missing Components**:
-    - None identified in current scope.
+    - System now exposes metrics for monitoring.
+    - Dashboard and Batch Processor dependencies updated (`prom-client`).
+    - Grafana is ready for deployment with pre-configured dashboards.
+- **Environment**:
+    - `npm install` is required in subdirectories to pick up new `prom-client` dependency.
 
 ## Next Steps for Next Agent
-1.  **End-to-End Verification**:
-    - Run `docker compose up` in a capable environment to verify full system integration (Dashboard + Batch Processor + Supabase).
-    - Verify data flow from extensions to Supabase to Dashboard.
-2.  **Deployment**:
-    - Prepare deployment scripts or configuration for staging environment.
+1.  **Deployment Execution**:
+    - Run `scripts/deploy.sh` in the actual target environment (Staging/Production).
+    - Verify the deployed application using `scripts/verify_deployment.sh`.
+    - Access Grafana at `http://<host>:3001` (admin/admin) and verify "Copilot Analytics System" dashboard.
+2.  **Alerting**:
+    - Configure Prometheus Alertmanager for critical alerts (e.g., high batch job error rates).
