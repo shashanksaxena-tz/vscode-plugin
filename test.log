@@ -1,0 +1,16 @@
+
+> analytics-dashboard@1.0.0 test
+> jest src/tests/components/MockRoutes.test.tsx
+
+PASS src/tests/components/MockRoutes.test.tsx
+  Mock Routes Guard
+    ✓ MockDashboardPage calls notFound when NODE_ENV is production (35 ms)
+    ✓ MockDashboardPage does NOT call notFound when NODE_ENV is development (7 ms)
+    ✓ MockTeamDashboardPage calls notFound when NODE_ENV is production (4 ms)
+    ✓ MockTeamDashboardPage does NOT call notFound when NODE_ENV is development (4 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        1.07 s
+Ran all test suites matching src/tests/components/MockRoutes.test.tsx.
