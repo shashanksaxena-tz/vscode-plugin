@@ -1,0 +1,32 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            # Navigate to directory (assuming it exists, otherwise clone)
+            # Adjust the directory name if necessary
+            if [ -d "copilot-analytics" ]; then
+              cd copilot-analytics
+            elif [ -d "vscode-plugin" ]; then
+              cd vscode-plugin
+            else
+              # Clone if not exists (update repo URL as needed)
+              git clone https://github.com/shashanksaxena-tz/vscode-plugin.git
+              cd vscode-plugin
+            fi
+
+            # Execute deployment script
+            ./scripts/deploy.sh
