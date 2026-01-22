@@ -32,7 +32,8 @@ export class SupabaseService {
       model: e.model,
       prompt_encrypted: e.prompt_encrypted,
       response_encrypted: e.response_encrypted,
-      metadata: e.metadata,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      metadata: e.metadata as any,
     }));
 
     const { error } = await this.client
