@@ -2,7 +2,7 @@
 > batch-processor@1.0.0 test
 > jest
 
-PASS src/jobs/cohortDetection.test.ts (12.714 s)
+PASS src/jobs/cohortDetection.test.ts (11.132 s)
   ● Console
 
     console.log
@@ -165,24 +165,11 @@ PASS src/jobs/cohortDetection.test.ts (12.714 s)
 
       at cohortDetection (src/jobs/cohortDetection.ts:244:11)
 
-PASS src/jobs/llmAnalysis.test.ts (12.944 s)
+PASS src/jobs/e2eFlow.test.ts (11.64 s)
   ● Console
 
     console.log
-      Analyzed user user1: score 87
-
-      at llmAnalysis (src/jobs/llmAnalysis.ts:92:15)
-
-    console.log
-      Analyzed user user1: score 62
-
-      at llmAnalysis (src/jobs/llmAnalysis.ts:92:15)
-
-PASS src/jobs/e2eFlow.test.ts (13.039 s)
-  ● Console
-
-    console.log
-      Aggregating metrics for 2026-01-21...
+      Aggregating metrics for 2026-01-22...
 
       at aggregateMetrics (src/jobs/aggregateMetrics.ts:7:11)
 
@@ -240,6 +227,19 @@ PASS src/jobs/e2eFlow.test.ts (13.039 s)
       Full E2E simulation passed successfully
 
       at Object.<anonymous> (src/jobs/e2eFlow.test.ts:123:17)
+
+PASS src/jobs/llmAnalysis.test.ts (12.149 s)
+  ● Console
+
+    console.log
+      Analyzed user user1: score 87
+
+      at llmAnalysis (src/jobs/llmAnalysis.ts:92:15)
+
+    console.log
+      Analyzed user user1: score 62
+
+      at llmAnalysis (src/jobs/llmAnalysis.ts:92:15)
 
 PASS src/jobs/cohortDetectionWithEmail.test.ts
   ● Console
@@ -308,5 +308,5 @@ PASS src/utils/audit.test.ts
 Test Suites: 7 passed, 7 total
 Tests:       17 passed, 17 total
 Snapshots:   0 total
-Time:        15.913 s
+Time:        15.011 s
 Ran all test suites.
