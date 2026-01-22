@@ -12,6 +12,17 @@ jest.mock('../utils/audit', () => ({
   logAudit: jest.fn(),
 }));
 
+// Mock EmailService
+jest.mock('../services/email', () => {
+  return {
+    EmailService: jest.fn().mockImplementation(() => {
+      return {
+        sendEmail: jest.fn().mockResolvedValue(undefined),
+      };
+    }),
+  };
+});
+
 describe('cohortDetection', () => {
   let mockSupabase: any;
   let responseQueue: any[] = [];
