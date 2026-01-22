@@ -14,5 +14,15 @@ COPY . .
 # Build the TypeScript code
 RUN npm run build
 
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nodejsuser
+
+# Set ownership
+RUN chown -R nodejsuser:nodejs /app
+
+# Switch to non-root user
+USER nodejsuser
+
 # Start the application
 CMD ["npm", "start"]

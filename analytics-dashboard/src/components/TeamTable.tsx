@@ -5,6 +5,7 @@ type QualityScore = Database["public"]["Tables"]["quality_scores"]["Row"];
 
 export interface TeamMember extends User {
   latest_score?: QualityScore | null;
+  cohort_names?: string[];
 }
 
 interface TeamTableProps {
@@ -22,6 +23,9 @@ export function TeamTable({ members }: TeamTableProps) {
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Department
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Cohorts
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Overall Score
@@ -53,6 +57,15 @@ export function TeamTable({ members }: TeamTableProps) {
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {member.department || "-"}
               </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {member.cohort_names && member.cohort_names.length > 0
+                  ? member.cohort_names.map((name, i) => (
+                      <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 mr-1">
+                        {name}
+                      </span>
+                    ))
+                  : "-"}
+              </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {member.latest_score ? (
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -79,7 +92,7 @@ export function TeamTable({ members }: TeamTableProps) {
           ))}
           {members.length === 0 && (
             <tr>
-              <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+              <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                 No team members found.
               </td>
             </tr>
