@@ -12,11 +12,13 @@
     - Created `.github/workflows/deploy.yml` for CI/CD deployment pipeline.
     - Created `docs/deployment.md` documenting the deployment process and requirements.
     - Created `.env.example` template.
+    - Fixed `analytics-dashboard/package-lock.json` to resolve `npm ci` failures in CI pipeline.
 
 ## State of Play
 - **Codebase**:
     - Deployment infrastructure is now set up (scripts, workflow, docs).
     - All components (Dashboard, Batch Processor, Plugins) are ready for deployment.
+    - CI pipeline should now pass with updated lockfiles.
 - **Environment**:
     - "Diff size is unusually large" warning persists.
     - Docker daemon access is restricted in current environment, so full `docker compose up` verification was skipped but configuration files were verified.
