@@ -15,5 +15,6 @@ scrape_configs:
     static_configs:
       - targets: ['batch-processor:8080']
   - job_name: 'dashboard'
+    metrics_path: /api/metrics
     static_configs:
       - targets: ['dashboard:3000']
