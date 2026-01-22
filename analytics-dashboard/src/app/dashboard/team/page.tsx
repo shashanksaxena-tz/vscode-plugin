@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { TeamTable, TeamMember } from "@/components/TeamTable";
+import { Database } from "@/types/database";
+
+type UserRow = Database['public']['Tables']['users']['Row'];
+type QualityScoreRow = Database['public']['Tables']['quality_scores']['Row'];
 
 export default async function TeamDashboardPage() {
   const supabase = await createClient();
@@ -9,18 +13,22 @@ export default async function TeamDashboardPage() {
   if (authError || !user) redirect("/login");
 
   // Fetch current user details to check role and department
-  const { data: currentUserData, error: userError } = await supabase
+  const { data: currentUserDataResponse, error: userError } = await supabase
     .from("users")
     .select("*")
     .eq("email", user.email!)
     .single();
+
+  const currentUserData = currentUserDataResponse as UserRow | null;
 
   if (userError || !currentUserData) {
     console.error("Error fetching user data:", userError);
     return <div className="p-8 text-red-600">Error loading user profile. Please contact support.</div>;
   }
 
-  if (currentUserData.role !== 'manager' && currentUserData.role !== 'admin') {
+  const userRole = currentUserData.role;
+
+  if (userRole !== 'manager' && userRole !== 'admin') {
     redirect("/dashboard");
   }
 
@@ -30,9 +38,10 @@ export default async function TeamDashboardPage() {
   try {
     let query = supabase.from("users").select("*");
 
-    if (currentUserData.role === 'manager') {
-      if (currentUserData.department) {
-        query = query.eq("department", currentUserData.department);
+    if (userRole === 'manager') {
+      const userDepartment = currentUserData.department;
+      if (userDepartment) {
+        query = query.eq("department", userDepartment);
       } else {
         // If manager has no department, show users with no department?
         // Or show all? Let's assume users with no department.
@@ -41,7 +50,8 @@ export default async function TeamDashboardPage() {
     }
     // Admin sees all, so no filter added.
 
-    const { data: usersData, error: usersFetchError } = await query;
+    const { data: usersDataResponse, error: usersFetchError } = await query;
+    const usersData = usersDataResponse as UserRow[] | null;
 
     if (usersFetchError) throw usersFetchError;
 
@@ -49,22 +59,39 @@ export default async function TeamDashboardPage() {
       const userEmails = usersData.map(u => u.email);
 
       // Fetch scores for these users
-      const { data: scoresData, error: scoresError } = await supabase
+      const { data: scoresDataResponse, error: scoresError } = await supabase
         .from("quality_scores")
         .select("*")
         .in("user_id", userEmails)
         .order("week_start_date", { ascending: false });
 
+      const scoresData = scoresDataResponse as QualityScoreRow[] | null;
+
       if (scoresError) throw scoresError;
 
-      // Map scores to users
+      // Fetch cohort memberships
+      const { data: cohortData, error: cohortError } = await supabase
+        .from("cohort_members")
+        .select("user_id, cohorts(name)")
+        .in("user_id", userEmails);
+
+      if (cohortError) console.error("Error fetching cohorts:", cohortError);
+
+      // Map scores and cohorts to users
       teamMembers = usersData.map(member => {
         const memberScores = scoresData?.filter(s => s.user_id === member.email) || [];
         // Since we ordered by date desc, the first one is the latest
         const latestScore = memberScores.length > 0 ? memberScores[0] : null;
+
+        const memberCohorts = cohortData
+          ?.filter(c => c.user_id === member.email)
+          .map(c => (c.cohorts as any)?.name)
+          .filter(Boolean) || [];
+
         return {
           ...member,
-          latest_score: latestScore
+          latest_score: latestScore,
+          cohort_names: memberCohorts
         };
       });
     }
