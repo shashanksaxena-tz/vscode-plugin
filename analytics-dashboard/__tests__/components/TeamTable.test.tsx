@@ -28,7 +28,8 @@ describe('TeamTable', () => {
           insights: {},
           suggestions: {},
           created_at: '2024-01-21'
-        }
+        },
+        cohort_names: ['High Performers']
       },
       {
         id: '2',
@@ -46,6 +47,7 @@ describe('TeamTable', () => {
 
     expect(screen.getByText('Alice')).toBeInTheDocument();
     expect(screen.getByText('alice@example.com')).toBeInTheDocument();
+    expect(screen.getByText('High Performers')).toBeInTheDocument();
     expect(screen.getByText('85')).toBeInTheDocument(); // Score
     expect(screen.getByText('90')).toBeInTheDocument(); // Efficiency
 
