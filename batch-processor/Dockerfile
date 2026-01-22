@@ -25,4 +25,4 @@ RUN chown -R nodejsuser:nodejs /app
 USER nodejsuser
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
