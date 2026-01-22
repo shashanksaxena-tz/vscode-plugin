@@ -132,6 +132,19 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["audit_logs"]["Insert"]>;
       };
+      cohort_members: {
+        Row: {
+          cohort_id: string;
+          user_id: string;
+          joined_at: string;
+        };
+        Insert: {
+          cohort_id: string;
+          user_id: string;
+          joined_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["cohort_members"]["Insert"]>;
+      };
     };
   };
 }
