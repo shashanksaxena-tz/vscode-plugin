@@ -2,31 +2,38 @@
 
 ## Context
 **Project**: Copilot Analytics & Coaching Platform
-**Date**: January 21, 2026
-**Agent**: Jules (Session 26)
+**Date**: January 23, 2026
+**Agent**: Jules (Session 27)
 
 ## Achievements
-- **Dashboard**:
-    - Implemented `analytics-dashboard/src/app/dashboard/team/page.tsx` (Manager View) which filters team members by department.
-    - Created `analytics-dashboard/src/components/TeamTable.tsx` to display team metrics.
-    - Added unit tests for Manager Dashboard and Team Table.
-    - Verified frontend visualization using Playwright.
-    - Upgraded Next.js to `14.2.23` to address security vulnerabilities.
-- **CI/CD**:
-    - Added `test-intellij-plugin` job to `.github/workflows/ci.yml` using Java 21.
-    - Verified Gradle build and tests pass locally.
+- **Deployment Infrastructure**:
+    - Created `docker-compose.prod.yml` with Dashboard, Batch Processor, and full Monitoring Stack (Prometheus, Alertmanager, Grafana).
+    - Created `scripts/deploy.sh` for automated deployment with environment variable handling.
+    - Created `scripts/generate_config.sh` for dynamic config generation.
+    - Created `scripts/verify_production_config.sh` for pre-deployment validation.
+- **Monitoring**:
+    - Implemented Prometheus configuration scraping `dashboard` and `batch-processor`.
+    - Configured Alertmanager with email notifications.
+    - Provisioned Grafana with Prometheus datasource.
+- **Verification**:
+    - Verified test suites for `analytics-dashboard` (17 tests) and `batch-processor` (17 tests).
+    - Validated deployment scripts and configuration file presence.
 
 ## State of Play
 - **Codebase**:
-    - Dashboard now has Developer, Manager, and Admin views implemented and tested.
-    - CI/CD covers all 5 components: Dashboard, Batch Processor, VS Code Extension, Cursor Hooks, IntelliJ Plugin.
+    - Production infrastructure is ready in `docker-compose.prod.yml`.
+    - Monitoring stack is configured in `monitoring/`.
+    - CI/CD covers all components.
 - **Environment**: "Diff size is unusually large" warning persists.
 - **Missing Components**:
-    - None identified in current scope.
+    - Application code might need updates to expose custom metrics on `/api/metrics` (Dashboard) and `/metrics` (Batch Processor) if not fully implemented yet.
 
 ## Next Steps for Next Agent
-1.  **End-to-End Verification**:
-    - Run `docker compose up` in a capable environment to verify full system integration (Dashboard + Batch Processor + Supabase).
-    - Verify data flow from extensions to Supabase to Dashboard.
-2.  **Deployment**:
-    - Prepare deployment scripts or configuration for staging environment.
+1.  **Metric Instrumentation**:
+    - Verify and implement `/api/metrics` in `analytics-dashboard`.
+    - Verify and implement `/metrics` in `batch-processor` (using `prom-client`).
+2.  **Grafana Dashboards**:
+    - Create JSON dashboard definitions in `monitoring/grafana/dashboards/`.
+    - Update `docker-compose.prod.yml` to provision these dashboards automatically.
+3.  **Documentation**:
+    - Update `docs/deployment.md` with instructions for the new deployment scripts.
