@@ -5,6 +5,7 @@ type QualityScore = Database["public"]["Tables"]["quality_scores"]["Row"];
 
 export interface TeamMember extends User {
   latest_score?: QualityScore | null;
+  cohorts?: { name: string; coaching_plan: string | null }[];
 }
 
 interface TeamTableProps {
@@ -22,6 +23,9 @@ export function TeamTable({ members }: TeamTableProps) {
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Department
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Cohorts
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Overall Score
@@ -54,6 +58,23 @@ export function TeamTable({ members }: TeamTableProps) {
                 {member.department || "-"}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
+                {member.cohorts && member.cohorts.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {member.cohorts.map((cohort, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 cursor-help"
+                        title={cohort.coaching_plan || "No coaching plan available"}
+                      >
+                        {cohort.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-400">-</span>
+                )}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
                 {member.latest_score ? (
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                     member.latest_score.overall_score >= 80 ? 'bg-green-100 text-green-800' :
@@ -79,7 +100,7 @@ export function TeamTable({ members }: TeamTableProps) {
           ))}
           {members.length === 0 && (
             <tr>
-              <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+              <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                 No team members found.
               </td>
             </tr>

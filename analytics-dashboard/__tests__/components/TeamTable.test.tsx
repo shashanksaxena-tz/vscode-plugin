@@ -53,4 +53,28 @@ describe('TeamTable', () => {
     expect(screen.getByText('bob@example.com')).toBeInTheDocument();
     expect(screen.getByText('N/A')).toBeInTheDocument(); // No score
   });
+
+  it('renders cohorts for team members', () => {
+    const mockMembers: TeamMember[] = [
+      {
+        id: '3',
+        email: 'charlie@example.com',
+        name: 'Charlie',
+        department: 'Product',
+        role: 'developer',
+        created_at: '2024-01-01',
+        last_active: '2024-01-20',
+        cohorts: [
+          { name: 'Over-prompters', coaching_plan: 'Focus on quality.' },
+          { name: 'Night Owls', coaching_plan: 'Sleep more.' }
+        ]
+      }
+    ];
+
+    render(<TeamTable members={mockMembers} />);
+
+    expect(screen.getByText('Charlie')).toBeInTheDocument();
+    expect(screen.getByText('Over-prompters')).toBeInTheDocument();
+    expect(screen.getByText('Night Owls')).toBeInTheDocument();
+  });
 });
