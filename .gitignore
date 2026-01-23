@@ -60,3 +60,4 @@ supabase/.temp/
 # Custom
 *_output.txt
 **/localPlatformArtifacts/
+monitoring/alertmanager.yml
