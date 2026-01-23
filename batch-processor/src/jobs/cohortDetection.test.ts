@@ -56,6 +56,7 @@ describe('cohortDetection', () => {
         accepted_count: 10,
         retry_count: 5,
         context_avg_files: 3,
+        total_tokens_used: 1000,
         date: '2023-01-01',
       },
     ];
@@ -63,39 +64,45 @@ describe('cohortDetection', () => {
     // Sequence of awaited calls:
     // 1. fetch metrics (gte)
     queueResponse({ data: mockMetrics, error: null });
+    // 2. fetch quality_scores for score improvement (optional, can fail)
+    queueResponse({ data: null, error: null });
 
-    // Loop over cohorts (3 cohorts)
+    // Loop over cohorts (6 cohorts now)
     // Cohort 1: Over-prompters (MATCH)
-    // 2. check exists (single) -> found
     queueResponse({ data: { id: 'cohort-1' }, error: null });
-    // 3. update details (eq)
     queueResponse({ error: null });
-    // 4. check existing member (select single) -> Not found (NEW MEMBER)
     queueResponse({ data: null, error: { code: 'PGRST116' } });
-    // 5. upsert member (upsert)
     queueResponse({ error: null });
-    // logAudit is called here (not awaited via supabase mock, but awaited directly)
-    // 6. update member count (eq)
     queueResponse({ error: null });
 
     // Cohort 2: Context-light (NO MATCH)
-    // 7. check exists (single) -> found
     queueResponse({ data: { id: 'cohort-2' }, error: null });
-    // 8. update details (eq)
     queueResponse({ error: null });
-    // 9. delete member (user1 is not context light) (eq)
     queueResponse({ error: null });
-    // 10. update member count (eq)
     queueResponse({ error: null });
 
     // Cohort 3: Retry loopers (NO MATCH)
-    // 11. check exists (single) -> found
     queueResponse({ data: { id: 'cohort-3' }, error: null });
-    // 12. update details (eq)
     queueResponse({ error: null });
-    // 13. delete member (user1 is not retry looper) (eq)
     queueResponse({ error: null });
-    // 14. update member count (eq)
+    queueResponse({ error: null });
+
+    // Cohort 4: Expensive model users (NO MATCH - not enough tokens per prompt)
+    queueResponse({ data: { id: 'cohort-4' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+
+    // Cohort 5: Copy-paste acceptors (NO MATCH)
+    queueResponse({ data: { id: 'cohort-5' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+
+    // Cohort 6: Quick learners (NO MATCH - no score improvement data)
+    queueResponse({ data: { id: 'cohort-6' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
     queueResponse({ error: null });
 
     await cohortDetection();
@@ -136,31 +143,52 @@ describe('cohortDetection', () => {
         accepted_count: 8,
         retry_count: 0,
         context_avg_files: 1.0, // < 2
+        total_tokens_used: 500,
         date: '2023-01-01',
       },
     ];
 
     // 1. fetch metrics
     queueResponse({ data: mockMetrics, error: null });
+    // 2. fetch quality_scores (optional)
+    queueResponse({ data: null, error: null });
 
     // Cohort 1: Over-prompters (user2 does not match)
-    queueResponse({ data: { id: 'c1' }, error: null }); // check exists
-    queueResponse({ error: null }); // update details
-    queueResponse({ error: null }); // delete member
-    queueResponse({ error: null }); // update count
+    queueResponse({ data: { id: 'c1' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
 
     // Cohort 2: Context-light (user2 MATCHES)
-    queueResponse({ data: { id: 'c2' }, error: null }); // check exists
-    queueResponse({ error: null }); // update details
-    queueResponse({ data: null, error: { code: 'PGRST116' } }); // check existing member (not found)
-    queueResponse({ error: null }); // upsert member (MATCH)
-    queueResponse({ error: null }); // update count
+    queueResponse({ data: { id: 'c2' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ data: null, error: { code: 'PGRST116' } });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
 
     // Cohort 3: Retry loopers (no match)
-    queueResponse({ data: { id: 'c3' }, error: null }); // check exists
-    queueResponse({ error: null }); // update details
-    queueResponse({ error: null }); // delete member
-    queueResponse({ error: null }); // update count
+    queueResponse({ data: { id: 'c3' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+
+    // Cohort 4: Expensive model users (no match)
+    queueResponse({ data: { id: 'c4' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+
+    // Cohort 5: Copy-paste acceptors (no match)
+    queueResponse({ data: { id: 'c5' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+
+    // Cohort 6: Quick learners (no match)
+    queueResponse({ data: { id: 'c6' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
 
     await cohortDetection();
 
@@ -187,21 +215,21 @@ describe('cohortDetection', () => {
         accepted_count: 10,
         retry_count: 0,
         context_avg_files: 5,
+        total_tokens_used: 1000,
         date: '2023-01-01',
       },
     ];
 
     // 1. fetch metrics
     queueResponse({ data: mockMetrics, error: null });
+    // 2. fetch quality_scores (optional)
+    queueResponse({ data: null, error: null });
 
     // Cohort 1: Over-prompters (MATCH)
-    queueResponse({ data: { id: 'c1' }, error: null }); // check exists
-    queueResponse({ error: null }); // update details
-    // check existing member -> FOUND (ALREADY MEMBER)
-    queueResponse({ data: { joined_at: '2023-01-01' }, error: null });
-    // upsert member (still called to ensure consistency)
+    queueResponse({ data: { id: 'c1' }, error: null });
     queueResponse({ error: null });
-    // update count
+    queueResponse({ data: { joined_at: '2023-01-01' }, error: null });
+    queueResponse({ error: null });
     queueResponse({ error: null });
 
     // Cohort 2: Context-light (no match)
@@ -212,6 +240,24 @@ describe('cohortDetection', () => {
 
     // Cohort 3: Retry loopers (no match)
     queueResponse({ data: { id: 'c3' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+
+    // Cohort 4: Expensive model users (no match)
+    queueResponse({ data: { id: 'c4' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+
+    // Cohort 5: Copy-paste acceptors (no match)
+    queueResponse({ data: { id: 'c5' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+
+    // Cohort 6: Quick learners (no match)
+    queueResponse({ data: { id: 'c6' }, error: null });
     queueResponse({ error: null });
     queueResponse({ error: null });
     queueResponse({ error: null });

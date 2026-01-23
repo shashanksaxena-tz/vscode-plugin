@@ -39,6 +39,46 @@ const COHORTS = [
         const retryRate = metrics.total_prompts > 0 ? metrics.retry_count / metrics.total_prompts : 0;
         return retryRate > 0.3;
     }
+  },
+  {
+    name: "Expensive model users",
+    description: "Developers using premium models (GPT-4, Claude) for simple tasks.",
+    criteria: {
+        premium_model_ratio: ">70%",
+        avg_prompt_complexity: "low"
+    },
+    coaching_plan: "Model selection guidance: Use faster/cheaper models for simple completions, reserve premium models for complex analysis.",
+    check: (metrics: UserMetrics) => {
+        // High token usage relative to prompts suggests using expensive models
+        const avgTokensPerPrompt = metrics.total_prompts > 0 ? metrics.total_tokens / metrics.total_prompts : 0;
+        return avgTokensPerPrompt > 2000 && metrics.total_prompts > 20;
+    }
+  },
+  {
+    name: "Copy-paste acceptors",
+    description: "Developers with very high acceptance rate but frequent immediate edits.",
+    criteria: {
+        acceptance_rate: ">90%",
+        edit_after_accept_rate: ">50%"
+    },
+    coaching_plan: "Review-before-accept training: Take time to read suggestions before accepting to reduce post-acceptance edits.",
+    check: (metrics: UserMetrics) => {
+        const acceptanceRate = metrics.total_prompts > 0 ? metrics.accepted_count / metrics.total_prompts : 0;
+        const editAfterAcceptRate = metrics.accepted_count > 0 ? metrics.edit_after_accept_count / metrics.accepted_count : 0;
+        return acceptanceRate > 0.9 && editAfterAcceptRate > 0.5 && metrics.total_prompts > 10;
+    }
+  },
+  {
+    name: "Quick learners",
+    description: "Developers showing significant score improvement.",
+    criteria: {
+        score_improvement: ">20 points in 4 weeks"
+    },
+    coaching_plan: "Consider as peer mentoring candidates. Share their success strategies with others.",
+    check: (metrics: UserMetrics) => {
+        // Score improvement tracked via quality_scores table
+        return metrics.score_improvement > 20;
+    }
   }
 ];
 
@@ -49,6 +89,9 @@ interface UserMetrics {
     retry_count: number;
     days_active: number;
     avg_context_files: number;
+    total_tokens: number;
+    edit_after_accept_count: number;
+    score_improvement: number;
 }
 
 export async function cohortDetection() {
@@ -88,7 +131,10 @@ export async function cohortDetection() {
             accepted_count: 0,
             retry_count: 0,
             days_active: 0,
-            avg_context_files: 0
+            avg_context_files: 0,
+            total_tokens: 0,
+            edit_after_accept_count: 0,
+            score_improvement: 0
         });
     }
 
@@ -97,6 +143,7 @@ export async function cohortDetection() {
     m.accepted_count += row.accepted_count || 0;
     m.retry_count += row.retry_count || 0;
     m.days_active += 1;
+    m.total_tokens += row.total_tokens_used || 0;
     // Weighted average for context files? Or just simple average of daily avgs?
     // Let's do simple average of daily averages for now.
     m.avg_context_files += row.context_avg_files || 0;
@@ -107,6 +154,46 @@ export async function cohortDetection() {
       if (m.days_active > 0) {
           m.avg_context_files = m.avg_context_files / m.days_active;
       }
+  }
+
+  // Fetch score improvement data from quality_scores (optional for "Quick learners" cohort)
+  try {
+    const fourWeeksAgo = new Date();
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    const fourWeeksStr = fourWeeksAgo.toISOString().split('T')[0];
+
+    const { data: scoresData, error: scoresError } = await supabase
+      .from('quality_scores')
+      .select('user_id, overall_score, week_start_date')
+      .gte('week_start_date', fourWeeksStr);
+
+    if (!scoresError && scoresData && scoresData.length > 0) {
+      // Sort by date
+      scoresData.sort((a, b) => new Date(a.week_start_date).getTime() - new Date(b.week_start_date).getTime());
+
+      // Group scores by user
+      const userScores = new Map<string, number[]>();
+      for (const score of scoresData) {
+        if (!userScores.has(score.user_id)) {
+          userScores.set(score.user_id, []);
+        }
+        userScores.get(score.user_id)!.push(score.overall_score);
+      }
+
+      // Calculate improvement (latest - earliest)
+      for (const [userId, scores] of userScores) {
+        if (scores.length >= 2) {
+          const improvement = scores[scores.length - 1] - scores[0];
+          const metrics = userMetricsMap.get(userId);
+          if (metrics) {
+            metrics.score_improvement = improvement;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    // Score improvement data is optional; continue without it
+    console.log("Could not fetch score improvement data:", err);
   }
 
   // 3. Evaluate cohorts

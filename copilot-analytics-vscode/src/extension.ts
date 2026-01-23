@@ -2,8 +2,10 @@ import * as vscode from 'vscode';
 import { TelemetryService } from './services/telemetry';
 import { SupabaseService } from './services/supabase';
 import { CompletionTracker } from './providers/completionTracker';
+import { StatusBarManager } from './ui/statusBar';
 
 let telemetryService: TelemetryService;
+let statusBarManager: StatusBarManager;
 
 export async function activate(context: vscode.ExtensionContext) {
   const config = vscode.workspace.getConfiguration('copilotAnalytics');
@@ -33,9 +35,15 @@ export async function activate(context: vscode.ExtensionContext) {
       console.error('Authentication failed:', e);
   }
 
+  // Initialize status bar (shows acceptance rate)
+  statusBarManager = new StatusBarManager(telemetryService || null, supabase);
+  context.subscriptions.push({
+    dispose: () => statusBarManager.dispose()
+  });
+
   if (telemetryService) {
       // Track inline completions
-      const tracker = new CompletionTracker(telemetryService);
+      const tracker = new CompletionTracker(telemetryService, statusBarManager);
 
       // Register inline completion provider wrapper
       context.subscriptions.push(

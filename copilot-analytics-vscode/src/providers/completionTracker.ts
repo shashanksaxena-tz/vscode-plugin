@@ -1,11 +1,15 @@
 import * as vscode from 'vscode';
 import { TelemetryService } from '../services/telemetry';
 import { TelemetryEvent, EventType } from '../types/events';
+import { StatusBarManager } from '../ui/statusBar';
 
 export class CompletionTracker implements vscode.InlineCompletionItemProvider {
   private pendingCompletions: Map<string, { text: string; timestamp: number }> = new Map();
 
-  constructor(private telemetry: TelemetryService) {}
+  constructor(
+    private telemetry: TelemetryService,
+    private statusBar?: StatusBarManager
+  ) {}
 
   async provideInlineCompletionItems(
     document: vscode.TextDocument,
@@ -45,6 +49,9 @@ export class CompletionTracker implements vscode.InlineCompletionItemProvider {
             range_length: change.rangeLength,
           }
         });
+
+        // Update status bar with accepted completion
+        this.statusBar?.recordCompletion(true);
       }
     }
   }
