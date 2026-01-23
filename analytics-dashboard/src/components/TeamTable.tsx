@@ -1,10 +1,22 @@
+"use client";
+
 import { Database } from "@/types/database";
+import { useState } from "react";
 
 type User = Database["public"]["Tables"]["users"]["Row"];
 type QualityScore = Database["public"]["Tables"]["quality_scores"]["Row"];
+type Json = Database["public"]["Tables"]["cohorts"]["Row"]["criteria"];
+
+interface Cohort {
+  name: string;
+  coaching_plan: string | null;
+  description: string | null;
+  criteria: Json;
+}
 
 export interface TeamMember extends User {
   latest_score?: QualityScore | null;
+  cohorts?: Cohort[];
 }
 
 interface TeamTableProps {
@@ -12,80 +24,157 @@ interface TeamTableProps {
 }
 
 export function TeamTable({ members }: TeamTableProps) {
+  const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null);
+
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              User
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Department
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Overall Score
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Effectiveness
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Efficiency
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Last Active
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {members.map((member) => (
-            <tr key={member.id}>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  <div className="ml-0">
-                    <div className="text-sm font-medium text-gray-900">
-                      {member.name || member.email}
+    <>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                User
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Department
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Cohorts
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Overall Score
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Effectiveness
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Efficiency
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Last Active
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {members.map((member) => (
+              <tr key={member.id}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="ml-0">
+                      <div className="text-sm font-medium text-gray-900">
+                        {member.name || member.email}
+                      </div>
+                      <div className="text-sm text-gray-500">{member.email}</div>
                     </div>
-                    <div className="text-sm text-gray-500">{member.email}</div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {member.department || "-"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {member.cohorts && member.cohorts.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {member.cohorts.map((cohort, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedCohort(cohort)}
+                          className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
+                        >
+                          {cohort.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-400">-</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {member.latest_score ? (
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      member.latest_score.overall_score >= 80 ? 'bg-green-100 text-green-800' :
+                      member.latest_score.overall_score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {member.latest_score.overall_score}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-gray-400">N/A</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {member.latest_score?.effectiveness_score ?? "-"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {member.latest_score?.efficiency_score ?? "-"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {new Date(member.last_active).toLocaleDateString()}
+                </td>
+              </tr>
+            ))}
+            {members.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                  No team members found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {selectedCohort && (
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setSelectedCohort(null)}></div>
+
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div>
+                <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                    {selectedCohort.name}
+                  </h3>
+                  <div className="mt-4 space-y-4">
+                    {selectedCohort.description && (
+                       <div>
+                         <h4 className="text-sm font-medium text-gray-500">Description</h4>
+                         <p className="text-sm text-gray-700 mt-1">{selectedCohort.description}</p>
+                       </div>
+                    )}
+
+                    {selectedCohort.coaching_plan && (
+                       <div>
+                         <h4 className="text-sm font-medium text-gray-500">Coaching Plan</h4>
+                         <p className="text-sm text-gray-700 mt-1 bg-blue-50 p-3 rounded-md border border-blue-100">{selectedCohort.coaching_plan}</p>
+                       </div>
+                    )}
+
+                    {selectedCohort.criteria && (
+                       <div>
+                         <h4 className="text-sm font-medium text-gray-500">Criteria</h4>
+                         <pre className="text-xs text-gray-600 mt-1 bg-gray-50 p-3 rounded-md overflow-x-auto">
+                           {JSON.stringify(selectedCohort.criteria, null, 2)}
+                         </pre>
+                       </div>
+                    )}
                   </div>
                 </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {member.department || "-"}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {member.latest_score ? (
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    member.latest_score.overall_score >= 80 ? 'bg-green-100 text-green-800' :
-                    member.latest_score.overall_score >= 60 ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {member.latest_score.overall_score}
-                  </span>
-                ) : (
-                  <span className="text-sm text-gray-400">N/A</span>
-                )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {member.latest_score?.effectiveness_score ?? "-"}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {member.latest_score?.efficiency_score ?? "-"}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {new Date(member.last_active).toLocaleDateString()}
-              </td>
-            </tr>
-          ))}
-          {members.length === 0 && (
-            <tr>
-              <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                No team members found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+              </div>
+              <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => setSelectedCohort(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

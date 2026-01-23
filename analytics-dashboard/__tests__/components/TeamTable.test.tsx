@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { TeamTable, TeamMember } from '@/components/TeamTable';
 
 describe('TeamTable', () => {
@@ -52,5 +52,75 @@ describe('TeamTable', () => {
     expect(screen.getByText('Bob')).toBeInTheDocument();
     expect(screen.getByText('bob@example.com')).toBeInTheDocument();
     expect(screen.getByText('N/A')).toBeInTheDocument(); // No score
+  });
+
+  it('renders cohorts for team members', () => {
+    const mockMembers: TeamMember[] = [
+      {
+        id: '3',
+        email: 'charlie@example.com',
+        name: 'Charlie',
+        department: 'Product',
+        role: 'developer',
+        created_at: '2024-01-01',
+        last_active: '2024-01-20',
+        cohorts: [
+          {
+            name: 'Over-prompters',
+            coaching_plan: 'Focus on quality.',
+            description: 'Users who prompt too much.',
+            criteria: { prompts: '> 50' }
+          },
+          {
+            name: 'Night Owls',
+            coaching_plan: 'Sleep more.',
+            description: 'Users active at night.',
+            criteria: { time: 'night' }
+          }
+        ]
+      }
+    ];
+
+    render(<TeamTable members={mockMembers} />);
+
+    expect(screen.getByText('Charlie')).toBeInTheDocument();
+    expect(screen.getByText('Over-prompters')).toBeInTheDocument();
+    expect(screen.getByText('Night Owls')).toBeInTheDocument();
+  });
+
+  it('opens modal with detailed info when cohort is clicked', () => {
+    const mockMembers: TeamMember[] = [
+      {
+        id: '4',
+        email: 'dave@example.com',
+        name: 'Dave',
+        department: 'Engineering',
+        role: 'developer',
+        created_at: '2024-01-01',
+        last_active: '2024-01-20',
+        cohorts: [
+          {
+            name: 'Test Cohort',
+            coaching_plan: 'Test Plan',
+            description: 'Test Description',
+            criteria: { foo: 'bar' }
+          }
+        ]
+      }
+    ];
+
+    render(<TeamTable members={mockMembers} />);
+
+    // Click the cohort badge
+    fireEvent.click(screen.getByText('Test Cohort'));
+
+    // Check if modal content is visible
+    expect(screen.getByText('Test Description')).toBeInTheDocument();
+    expect(screen.getByText('Test Plan')).toBeInTheDocument();
+    // Use a regex or loose match for JSON content
+    // text match options allow flexible searching
+    expect(screen.getByText((content, element) => {
+      return element?.tagName.toLowerCase() === 'pre' && content.includes('"foo": "bar"');
+    })).toBeInTheDocument();
   });
 });
