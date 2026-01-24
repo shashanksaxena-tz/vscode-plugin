@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { TeamTable, TeamMember } from "@/components/TeamTable";
+import { Database } from "@/types/database";
+
+type UserRow = Database['public']['Tables']['users']['Row'];
+type QualityScoreRow = Database['public']['Tables']['quality_scores']['Row'];
 
 export default async function TeamDashboardPage() {
   const supabase = await createClient();
@@ -13,6 +17,7 @@ export default async function TeamDashboardPage() {
     .from("users")
     .select("*")
     .eq("email", user.email!)
+    .returns<UserRow[]>()
     .single();
 
   if (userError || !currentUserData) {
@@ -41,7 +46,7 @@ export default async function TeamDashboardPage() {
     }
     // Admin sees all, so no filter added.
 
-    const { data: usersData, error: usersFetchError } = await query;
+    const { data: usersData, error: usersFetchError } = await query.returns<UserRow[]>();
 
     if (usersFetchError) throw usersFetchError;
 
@@ -53,7 +58,8 @@ export default async function TeamDashboardPage() {
         .from("quality_scores")
         .select("*")
         .in("user_id", userEmails)
-        .order("week_start_date", { ascending: false });
+        .order("week_start_date", { ascending: false })
+        .returns<QualityScoreRow[]>();
 
       if (scoresError) throw scoresError;
 
