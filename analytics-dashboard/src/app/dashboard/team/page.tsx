@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { TeamTable, TeamMember } from "@/components/TeamTable";
+import { Database } from "@/types/database";
+
+type UserData = Database['public']['Tables']['users']['Row'];
+type QualityScore = Database['public']['Tables']['quality_scores']['Row'];
 
 export default async function TeamDashboardPage() {
   const supabase = await createClient();
@@ -9,11 +13,12 @@ export default async function TeamDashboardPage() {
   if (authError || !user) redirect("/login");
 
   // Fetch current user details to check role and department
+  // Using explicit cast to avoid 'never' type inference issues
   const { data: currentUserData, error: userError } = await supabase
     .from("users")
     .select("*")
     .eq("email", user.email!)
-    .single();
+    .single() as { data: UserData | null, error: any };
 
   if (userError || !currentUserData) {
     console.error("Error fetching user data:", userError);
@@ -34,14 +39,13 @@ export default async function TeamDashboardPage() {
       if (currentUserData.department) {
         query = query.eq("department", currentUserData.department);
       } else {
-        // If manager has no department, show users with no department?
-        // Or show all? Let's assume users with no department.
+        // If manager has no department, show users with no department
         query = query.is("department", null);
       }
     }
     // Admin sees all, so no filter added.
 
-    const { data: usersData, error: usersFetchError } = await query;
+    const { data: usersData, error: usersFetchError } = await query as { data: UserData[] | null, error: any };
 
     if (usersFetchError) throw usersFetchError;
 
@@ -53,7 +57,7 @@ export default async function TeamDashboardPage() {
         .from("quality_scores")
         .select("*")
         .in("user_id", userEmails)
-        .order("week_start_date", { ascending: false });
+        .order("week_start_date", { ascending: false }) as { data: QualityScore[] | null, error: any };
 
       if (scoresError) throw scoresError;
 
