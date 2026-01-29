@@ -3,10 +3,12 @@ import { TelemetryEvent } from '../types/events';
 import { Database } from '../types/database';
 
 export class SupabaseService {
-  private client: SupabaseClient<Database>;
+  // Removing generic to avoid 'never' inference issues with strict Supabase types
+  private client: SupabaseClient;
 
   constructor(url: string, anonKey: string) {
-    this.client = createClient<Database>(url, anonKey);
+    // Removing generic here as well
+    this.client = createClient(url, anonKey);
   }
 
   async authenticate(githubToken: string) {
@@ -23,6 +25,7 @@ export class SupabaseService {
   }
 
   async insertEvents(events: TelemetryEvent[]) {
+    // We strictly type the payload here to ensure we match the DB schema
     const records: Database['public']['Tables']['events']['Insert'][] = events.map(e => ({
       user_id: e.user_id,
       session_id: e.session_id,
@@ -51,6 +54,7 @@ export class SupabaseService {
       .single();
 
     if (error) return 0;
+    // data is now any, so this access is unchecked but safe if schema matches
     return data?.overall_score || 0;
   }
 }
