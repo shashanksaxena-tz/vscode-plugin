@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { TeamTable, TeamMember } from "@/components/TeamTable";
+import { Database } from "@/types/database";
 
 export default async function TeamDashboardPage() {
   const supabase = await createClient();
@@ -9,11 +10,13 @@ export default async function TeamDashboardPage() {
   if (authError || !user) redirect("/login");
 
   // Fetch current user details to check role and department
-  const { data: currentUserData, error: userError } = await supabase
+  const { data: rawUserData, error: userError } = await supabase
     .from("users")
     .select("*")
     .eq("email", user.email!)
     .single();
+
+  const currentUserData = rawUserData as Database['public']['Tables']['users']['Row'] | null;
 
   if (userError || !currentUserData) {
     console.error("Error fetching user data:", userError);
@@ -41,7 +44,8 @@ export default async function TeamDashboardPage() {
     }
     // Admin sees all, so no filter added.
 
-    const { data: usersData, error: usersFetchError } = await query;
+    const { data: rawUsersData, error: usersFetchError } = await query;
+    const usersData = rawUsersData as Database['public']['Tables']['users']['Row'][] | null;
 
     if (usersFetchError) throw usersFetchError;
 
@@ -49,11 +53,13 @@ export default async function TeamDashboardPage() {
       const userEmails = usersData.map(u => u.email);
 
       // Fetch scores for these users
-      const { data: scoresData, error: scoresError } = await supabase
+      const { data: rawScoresData, error: scoresError } = await supabase
         .from("quality_scores")
         .select("*")
         .in("user_id", userEmails)
         .order("week_start_date", { ascending: false });
+
+      const scoresData = rawScoresData as Database['public']['Tables']['quality_scores']['Row'][] | null;
 
       if (scoresError) throw scoresError;
 
