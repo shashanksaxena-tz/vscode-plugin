@@ -232,13 +232,7 @@ export async function cohortDetection() {
         }
     }
 
-    // Update member count
-    await supabase
-        .from('cohorts')
-        .update({ member_count: memberCount })
-        .eq('id', cohortId);
-
-    console.log(`Cohort ${cohortDef.name} updated with ${memberCount} members.`);
+    // Member count is automatically updated by the database trigger 'on_cohort_member_change'
   }
 
   console.log("Cohort detection job completed.");

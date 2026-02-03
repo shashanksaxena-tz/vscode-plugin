@@ -57,14 +57,51 @@ export default async function TeamDashboardPage() {
 
       if (scoresError) throw scoresError;
 
-      // Map scores to users
+      // Fetch cohort memberships
+      const { data: cohortMembersData, error: cohortMembersError } = await supabase
+        .from("cohort_members")
+        .select("user_id, cohort_id")
+        .in("user_id", userEmails);
+
+      if (cohortMembersError) throw cohortMembersError;
+
+      // Fetch cohorts details
+      let cohortsData: { id: string; name: string; coaching_plan: string | null; description: string | null; criteria: any }[] = [];
+      if (cohortMembersData && cohortMembersData.length > 0) {
+        const cohortIds = [...new Set(cohortMembersData.map(cm => cm.cohort_id))];
+        const { data: cohorts, error: cohortsError } = await supabase
+          .from("cohorts")
+          .select("id, name, coaching_plan, description, criteria")
+          .in("id", cohortIds);
+
+        if (cohortsError) throw cohortsError;
+        cohortsData = cohorts || [];
+      }
+
+      // Map scores and cohorts to users
       teamMembers = usersData.map(member => {
         const memberScores = scoresData?.filter(s => s.user_id === member.email) || [];
         // Since we ordered by date desc, the first one is the latest
         const latestScore = memberScores.length > 0 ? memberScores[0] : null;
+
+        const memberCohortIds = cohortMembersData
+            ?.filter(cm => cm.user_id === member.email)
+            .map(cm => cm.cohort_id) || [];
+
+        const memberCohorts = cohortsData
+            .filter(c => memberCohortIds.includes(c.id))
+            .map(c => ({
+              id: c.id,
+              name: c.name,
+              coaching_plan: c.coaching_plan,
+              description: c.description,
+              criteria: c.criteria
+            }));
+
         return {
           ...member,
-          latest_score: latestScore
+          latest_score: latestScore,
+          cohorts: memberCohorts
         };
       });
     }
@@ -74,7 +111,7 @@ export default async function TeamDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="p-8">
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Team Analytics</h1>
         <p className="text-gray-600">
