@@ -10,6 +10,15 @@ A comprehensive platform to track, analyze, and improve GitHub Copilot usage acr
 - **Batch Processor**: Aggregates data, runs scoring algorithms, detects cohorts, and sends emails.
 - **Analytics Dashboard**: Next.js web application for visualizing insights.
 
+## Key Features
+
+### Cohort Management
+Managers can group developers into "Cohorts" to provide targeted coaching and track progress collectively.
+- **Access**: Navigate to the Manager Dashboard at `/dashboard/team`.
+- **Create & Edit**: Define cohorts with a name, description, and coaching plan.
+- **Member Management**: Add or remove team members from cohorts.
+- **Synchronization**: `member_count` is automatically kept in sync via database triggers.
+
 ## Setup & Deployment
 
 ### Encryption Key
