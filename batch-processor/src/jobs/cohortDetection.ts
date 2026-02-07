@@ -78,6 +78,8 @@ export async function cohortDetection() {
 
   // 2. Aggregate per user
   const userMetricsMap = new Map<string, UserMetrics>();
+  const userDatesMap = new Map<string, Set<string>>();
+  const userRowCountMap = new Map<string, number>();
 
   for (const row of metricsData) {
     const userId = row.user_id;
@@ -90,22 +92,29 @@ export async function cohortDetection() {
             days_active: 0,
             avg_context_files: 0
         });
+        userDatesMap.set(userId, new Set());
+        userRowCountMap.set(userId, 0);
     }
 
     const m = userMetricsMap.get(userId)!;
     m.total_prompts += row.total_prompts || 0;
     m.accepted_count += row.accepted_count || 0;
     m.retry_count += row.retry_count || 0;
-    m.days_active += 1;
-    // Weighted average for context files? Or just simple average of daily avgs?
-    // Let's do simple average of daily averages for now.
     m.avg_context_files += row.context_avg_files || 0;
+
+    userDatesMap.get(userId)!.add(row.date);
+    userRowCountMap.set(userId, userRowCountMap.get(userId)! + 1);
   }
 
   // Finalize averages
-  for (const m of userMetricsMap.values()) {
-      if (m.days_active > 0) {
-          m.avg_context_files = m.avg_context_files / m.days_active;
+  for (const [userId, m] of userMetricsMap) {
+      const dates = userDatesMap.get(userId)!;
+      const rowCount = userRowCountMap.get(userId)!;
+
+      m.days_active = dates.size;
+
+      if (rowCount > 0) {
+          m.avg_context_files = m.avg_context_files / rowCount;
       }
   }
 
@@ -232,13 +241,7 @@ export async function cohortDetection() {
         }
     }
 
-    // Update member count
-    await supabase
-        .from('cohorts')
-        .update({ member_count: memberCount })
-        .eq('id', cohortId);
-
-    console.log(`Cohort ${cohortDef.name} updated with ${memberCount} members.`);
+    // Member count is automatically updated by the database trigger 'on_cohort_member_change'
   }
 
   console.log("Cohort detection job completed.");
