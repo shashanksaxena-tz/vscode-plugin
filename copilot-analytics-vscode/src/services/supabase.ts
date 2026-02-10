@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { TelemetryEvent } from '../types/events';
-import { Database } from '../types/database';
+import { Database, Json } from '../types/database';
 
 export class SupabaseService {
   private client: SupabaseClient<Database>;
@@ -23,16 +23,17 @@ export class SupabaseService {
   }
 
   async insertEvents(events: TelemetryEvent[]) {
-    const records: Database['public']['Tables']['events']['Insert'][] = events.map(e => ({
+    // Cast to any because the metadata field is complex Json type
+    const records = events.map(e => ({
       user_id: e.user_id,
       session_id: e.session_id,
       timestamp: e.timestamp,
       event_type: e.event_type,
       platform: e.platform,
-      model: e.model,
-      prompt_encrypted: e.prompt_encrypted,
-      response_encrypted: e.response_encrypted,
-      metadata: e.metadata,
+      model: e.model || null,
+      prompt_encrypted: e.prompt_encrypted || null,
+      response_encrypted: e.response_encrypted || null,
+      metadata: e.metadata as unknown as Json,
     }));
 
     const { error } = await this.client
