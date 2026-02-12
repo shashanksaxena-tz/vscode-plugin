@@ -9,7 +9,11 @@ jest.mock('@/lib/supabase/server', () => ({
 }));
 
 jest.mock('next/navigation', () => ({
-  redirect: jest.fn(),
+  redirect: jest.fn().mockImplementation(() => {
+    const error = new Error('NEXT_REDIRECT');
+    (error as any).digest = 'NEXT_REDIRECT';
+    throw error;
+  }),
 }));
 
 jest.mock('@/components/AuditLogTable', () => ({
@@ -38,8 +42,8 @@ describe('AdminDashboardPage', () => {
 
     try {
       await AdminDashboardPage();
-    } catch (e) {
-      // ignore redirect error
+    } catch (e: any) {
+      if (e.message !== 'NEXT_REDIRECT') throw e;
     }
 
     expect(mockRedirect).toHaveBeenCalledWith('/login');
@@ -56,9 +60,11 @@ describe('AdminDashboardPage', () => {
       from: jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { role: 'developer' },
-              error: null
+            single: jest.fn().mockReturnValue({
+                then: (resolve: any) => resolve({
+                    data: { role: 'developer' },
+                    error: null
+                })
             }),
           }),
         }),
@@ -67,8 +73,8 @@ describe('AdminDashboardPage', () => {
 
     try {
       await AdminDashboardPage();
-    } catch (e) {
-      // ignore redirect error
+    } catch (e: any) {
+      if (e.message !== 'NEXT_REDIRECT') throw e;
     }
 
     expect(mockRedirect).toHaveBeenCalledWith('/dashboard');
@@ -84,7 +90,8 @@ describe('AdminDashboardPage', () => {
     mockCreateClient.mockResolvedValue({
       auth: {
         getUser: jest.fn().mockResolvedValue({
-          data: { user: { email: 'admin@example.com' } }
+          data: { user: { email: 'admin@example.com' } },
+          error: null
         }),
       },
       from: jest.fn().mockImplementation((table) => {
@@ -92,9 +99,11 @@ describe('AdminDashboardPage', () => {
           return {
             select: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: { role: 'admin' },
-                  error: null
+                single: jest.fn().mockReturnValue({
+                    then: (resolve: any) => resolve({
+                        data: { role: 'admin' },
+                        error: null
+                    })
                 }),
               }),
             }),
@@ -104,9 +113,11 @@ describe('AdminDashboardPage', () => {
           return {
             select: jest.fn().mockReturnValue({
               order: jest.fn().mockReturnValue({
-                limit: jest.fn().mockResolvedValue({
-                  data: mockLogs,
-                  error: null
+                limit: jest.fn().mockReturnValue({
+                    then: (resolve: any) => resolve({
+                        data: mockLogs,
+                        error: null
+                    })
                 }),
               }),
             }),
