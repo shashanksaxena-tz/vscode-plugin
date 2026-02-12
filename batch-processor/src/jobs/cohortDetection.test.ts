@@ -75,28 +75,25 @@ describe('cohortDetection', () => {
     // 5. upsert member (upsert)
     queueResponse({ error: null });
     // logAudit is called here (not awaited via supabase mock, but awaited directly)
-    // 6. update member count (eq)
-    queueResponse({ error: null });
+    // REMOVED: 6. update member count (eq)
 
     // Cohort 2: Context-light (NO MATCH)
-    // 7. check exists (single) -> found
+    // 6. check exists (single) -> found
     queueResponse({ data: { id: 'cohort-2' }, error: null });
-    // 8. update details (eq)
+    // 7. update details (eq)
     queueResponse({ error: null });
-    // 9. delete member (user1 is not context light) (eq)
+    // 8. delete member (user1 is not context light) (eq)
     queueResponse({ error: null });
-    // 10. update member count (eq)
-    queueResponse({ error: null });
+    // REMOVED: 10. update member count (eq)
 
     // Cohort 3: Retry loopers (NO MATCH)
-    // 11. check exists (single) -> found
+    // 9. check exists (single) -> found
     queueResponse({ data: { id: 'cohort-3' }, error: null });
-    // 12. update details (eq)
+    // 10. update details (eq)
     queueResponse({ error: null });
-    // 13. delete member (user1 is not retry looper) (eq)
+    // 11. delete member (user1 is not retry looper) (eq)
     queueResponse({ error: null });
-    // 14. update member count (eq)
-    queueResponse({ error: null });
+    // REMOVED: 14. update member count (eq)
 
     await cohortDetection();
 
@@ -147,20 +144,20 @@ describe('cohortDetection', () => {
     queueResponse({ data: { id: 'c1' }, error: null }); // check exists
     queueResponse({ error: null }); // update details
     queueResponse({ error: null }); // delete member
-    queueResponse({ error: null }); // update count
+    // REMOVED: update count
 
     // Cohort 2: Context-light (user2 MATCHES)
     queueResponse({ data: { id: 'c2' }, error: null }); // check exists
     queueResponse({ error: null }); // update details
     queueResponse({ data: null, error: { code: 'PGRST116' } }); // check existing member (not found)
     queueResponse({ error: null }); // upsert member (MATCH)
-    queueResponse({ error: null }); // update count
+    // REMOVED: update count
 
     // Cohort 3: Retry loopers (no match)
     queueResponse({ data: { id: 'c3' }, error: null }); // check exists
     queueResponse({ error: null }); // update details
     queueResponse({ error: null }); // delete member
-    queueResponse({ error: null }); // update count
+    // REMOVED: update count
 
     await cohortDetection();
 
@@ -201,20 +198,19 @@ describe('cohortDetection', () => {
     queueResponse({ data: { joined_at: '2023-01-01' }, error: null });
     // upsert member (still called to ensure consistency)
     queueResponse({ error: null });
-    // update count
-    queueResponse({ error: null });
+    // REMOVED: update count
 
     // Cohort 2: Context-light (no match)
     queueResponse({ data: { id: 'c2' }, error: null });
     queueResponse({ error: null });
     queueResponse({ error: null });
-    queueResponse({ error: null });
+    // REMOVED: update count
 
     // Cohort 3: Retry loopers (no match)
     queueResponse({ data: { id: 'c3' }, error: null });
     queueResponse({ error: null });
     queueResponse({ error: null });
-    queueResponse({ error: null });
+    // REMOVED: update count
 
     await cohortDetection();
 

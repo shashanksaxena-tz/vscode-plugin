@@ -158,7 +158,6 @@ export async function cohortDetection() {
         }
         cohortId = newCohort.id;
     }
-    let memberCount = 0;
 
     // Identify members
     for (const userMetrics of userMetricsMap.values()) {
@@ -183,8 +182,6 @@ export async function cohortDetection() {
             if (memberError) {
                 console.error(`Error adding user ${userMetrics.user_id} to cohort ${cohortDef.name}:`, memberError);
             } else {
-                memberCount++;
-
                 // Actions if new member
                 if (!existingMember) {
                     const userEmail = userMetrics.user_id;
@@ -232,13 +229,7 @@ export async function cohortDetection() {
         }
     }
 
-    // Update member count
-    await supabase
-        .from('cohorts')
-        .update({ member_count: memberCount })
-        .eq('id', cohortId);
-
-    console.log(`Cohort ${cohortDef.name} updated with ${memberCount} members.`);
+    console.log(`Cohort ${cohortDef.name} processed.`);
   }
 
   console.log("Cohort detection job completed.");
