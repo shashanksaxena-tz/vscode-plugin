@@ -9,7 +9,7 @@ jest.mock('@/lib/supabase/server', () => ({
 }));
 
 jest.mock('next/navigation', () => ({
-  redirect: jest.fn(),
+  redirect: jest.fn().mockImplementation(() => { throw new Error('NEXT_REDIRECT'); }),
 }));
 
 jest.mock('@/components/TeamTable', () => ({
@@ -31,11 +31,15 @@ describe('TeamDashboardPage', () => {
   it('redirects to login if user is not authenticated', async () => {
     mockCreateClient.mockResolvedValue({
       auth: {
-        getUser: jest.fn().mockResolvedValue({ data: { user: null } }),
+        getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: { message: 'Auth error' } }),
       },
     });
 
-    try { await TeamDashboardPage(); } catch (e) {}
+    try {
+        await TeamDashboardPage();
+    } catch (e: any) {
+        if (e.message !== 'NEXT_REDIRECT') throw e;
+    }
     expect(mockRedirect).toHaveBeenCalledWith('/login');
   });
 
@@ -43,22 +47,29 @@ describe('TeamDashboardPage', () => {
     mockCreateClient.mockResolvedValue({
       auth: {
         getUser: jest.fn().mockResolvedValue({
-          data: { user: { email: 'dev@example.com' } }
+          data: { user: { email: 'dev@example.com' } },
+          error: null
         }),
       },
       from: jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { role: 'developer' },
-              error: null
+            single: jest.fn().mockReturnValue({
+              then: (resolve: any) => resolve({
+                 data: { role: 'developer', email: 'dev@example.com' },
+                 error: null
+              }),
             }),
           }),
         }),
       }),
     });
 
-    try { await TeamDashboardPage(); } catch (e) {}
+    try {
+        await TeamDashboardPage();
+    } catch (e: any) {
+        if (e.message !== 'NEXT_REDIRECT') throw e;
+    }
     expect(mockRedirect).toHaveBeenCalledWith('/dashboard');
   });
 
@@ -72,52 +83,70 @@ describe('TeamDashboardPage', () => {
       { user_id: 'alice@example.com', overall_score: 80 }
     ];
 
-    mockCreateClient.mockResolvedValue({
+    const mockSupabase = {
       auth: {
         getUser: jest.fn().mockResolvedValue({
-          data: { user: { email: 'manager@example.com' } }
+          data: { user: { email: 'manager@example.com' } },
+          error: null
         }),
       },
-      from: jest.fn().mockImplementation((table) => {
+      from: jest.fn(),
+    };
+
+    mockCreateClient.mockResolvedValue(mockSupabase);
+
+    mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'users') {
-          // We need to support two chains:
-          // 1. select().eq().single() -> user profile
-          // 2. select().eq() -> team list (awaited directly)
-
-          const chain = {
-            eq: jest.fn().mockReturnThis(),
-            is: jest.fn().mockReturnThis(),
-            single: jest.fn().mockResolvedValue({
-              data: { role: 'manager', department: 'Engineering' },
-              error: null
-            }),
-            then: jest.fn().mockImplementation((resolve) => {
-                // If single wasn't called (which returns a promise directly in this mock setup usually,
-                // but here single returns a promise.
-                // But await query triggers .then() on the chain object.
-                resolve({ data: mockUsers, error: null });
-            })
-          };
-
-          return {
-            select: jest.fn().mockReturnValue(chain)
-          };
+            return {
+                select: jest.fn().mockReturnValue({
+                    eq: jest.fn().mockImplementation((field, value) => {
+                        // Profile fetch
+                        if (field === 'email' && value === 'manager@example.com') {
+                            return {
+                                single: jest.fn().mockReturnValue({
+                                    then: (resolve: any) => resolve({
+                                        data: { role: 'manager', department: 'Engineering', email: 'manager@example.com' },
+                                        error: null
+                                    }),
+                                })
+                            };
+                        }
+                        // Team fetch (with dept)
+                        if (field === 'department' && value === 'Engineering') {
+                             return {
+                                 returns: jest.fn().mockReturnValue({
+                                     then: (resolve: any) => resolve({ data: mockUsers, error: null })
+                                 })
+                             };
+                        }
+                        return { single: jest.fn(), returns: jest.fn() };
+                    }),
+                    // Fallback for .is() if dept is null
+                    is: jest.fn().mockReturnValue({
+                         returns: jest.fn().mockReturnValue({
+                             then: (resolve: any) => resolve({ data: mockUsers, error: null })
+                         })
+                    }),
+                    returns: jest.fn()
+                })
+            };
         }
 
         if (table === 'quality_scores') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockReturnValue({
-                order: jest.fn().mockResolvedValue({
-                  data: mockScores,
-                  error: null
-                }),
-              }),
-            }),
-          };
+             return {
+                select: jest.fn().mockReturnValue({
+                    in: jest.fn().mockReturnValue({
+                        order: jest.fn().mockReturnValue({
+                            returns: jest.fn().mockReturnValue({
+                                then: (resolve: any) => resolve({ data: mockScores, error: null })
+                            })
+                        })
+                    })
+                })
+             };
         }
+
         return { select: jest.fn() };
-      }),
     });
 
     const jsx = await TeamDashboardPage();
