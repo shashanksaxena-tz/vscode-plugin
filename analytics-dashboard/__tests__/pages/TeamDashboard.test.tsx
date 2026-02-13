@@ -20,6 +20,14 @@ jest.mock('@/components/TeamTable', () => ({
   ),
 }));
 
+jest.mock('@/components/CohortList', () => ({
+  CohortList: ({ cohorts }: { cohorts: any[] }) => (
+    <div data-testid="cohort-list">
+      {cohorts ? `Cohorts: ${cohorts.length}` : 'No Cohorts'}
+    </div>
+  ),
+}));
+
 describe('TeamDashboardPage', () => {
   const mockCreateClient = createClient as jest.Mock;
   const mockRedirect = redirect as unknown as jest.Mock;
@@ -72,6 +80,10 @@ describe('TeamDashboardPage', () => {
       { user_id: 'alice@example.com', overall_score: 80 }
     ];
 
+    const mockCohorts = [
+        { id: '1', name: 'Test Cohort', member_count: 5 }
+    ];
+
     mockCreateClient.mockResolvedValue({
       auth: {
         getUser: jest.fn().mockResolvedValue({
@@ -79,24 +91,32 @@ describe('TeamDashboardPage', () => {
         }),
       },
       from: jest.fn().mockImplementation((table) => {
+        if (table === 'cohorts') {
+             return {
+                select: jest.fn().mockReturnValue({
+                  order: jest.fn().mockResolvedValue({
+                    data: mockCohorts,
+                    error: null
+                  }),
+                }),
+              };
+        }
         if (table === 'users') {
           // We need to support two chains:
           // 1. select().eq().single() -> user profile
           // 2. select().eq() -> team list (awaited directly)
 
           const chain = {
-            eq: jest.fn().mockReturnThis(),
-            is: jest.fn().mockReturnThis(),
-            single: jest.fn().mockResolvedValue({
-              data: { role: 'manager', department: 'Engineering' },
-              error: null
-            }),
-            then: jest.fn().mockImplementation((resolve) => {
-                // If single wasn't called (which returns a promise directly in this mock setup usually,
-                // but here single returns a promise.
-                // But await query triggers .then() on the chain object.
-                resolve({ data: mockUsers, error: null });
-            })
+             eq: jest.fn().mockReturnThis(),
+             is: jest.fn().mockReturnThis(),
+             single: jest.fn().mockResolvedValue({
+                 data: { role: 'manager', department: 'Engineering' },
+                 error: null
+             }),
+             then: function(resolve: any) {
+                 // If awaited directly (team fetch), return list
+                 resolve({ data: mockUsers, error: null });
+             }
           };
 
           return {
@@ -126,5 +146,6 @@ describe('TeamDashboardPage', () => {
     expect(screen.getByText('Team Analytics')).toBeInTheDocument();
     expect(screen.getByText('Department: Engineering')).toBeInTheDocument();
     expect(screen.getByTestId('team-table')).toHaveTextContent('Members: 2');
+    expect(screen.getByTestId('cohort-list')).toHaveTextContent('Cohorts: 1');
   });
 });
