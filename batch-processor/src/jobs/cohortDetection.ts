@@ -77,36 +77,58 @@ export async function cohortDetection() {
   }
 
   // 2. Aggregate per user
-  const userMetricsMap = new Map<string, UserMetrics>();
+  // We need to track unique dates for days_active and compute weighted average for context files
+  const userAggregates = new Map<string, {
+      user_id: string;
+      total_prompts: number;
+      accepted_count: number;
+      retry_count: number;
+      active_dates: Set<string>;
+      weighted_context_sum: number; // sum(context_avg_files * total_prompts)
+  }>();
 
   for (const row of metricsData) {
-    const userId = row.user_id;
-    if (!userMetricsMap.has(userId)) {
-        userMetricsMap.set(userId, {
-            user_id: userId,
-            total_prompts: 0,
-            accepted_count: 0,
-            retry_count: 0,
-            days_active: 0,
-            avg_context_files: 0
-        });
-    }
+      const userId = row.user_id;
+      if (!userAggregates.has(userId)) {
+          userAggregates.set(userId, {
+              user_id: userId,
+              total_prompts: 0,
+              accepted_count: 0,
+              retry_count: 0,
+              active_dates: new Set(),
+              weighted_context_sum: 0
+          });
+      }
 
-    const m = userMetricsMap.get(userId)!;
-    m.total_prompts += row.total_prompts || 0;
-    m.accepted_count += row.accepted_count || 0;
-    m.retry_count += row.retry_count || 0;
-    m.days_active += 1;
-    // Weighted average for context files? Or just simple average of daily avgs?
-    // Let's do simple average of daily averages for now.
-    m.avg_context_files += row.context_avg_files || 0;
+      const m = userAggregates.get(userId)!;
+      m.total_prompts += row.total_prompts || 0;
+      m.accepted_count += row.accepted_count || 0;
+      m.retry_count += row.retry_count || 0;
+      if (row.date) {
+          m.active_dates.add(row.date);
+      }
+
+      const rowPrompts = row.total_prompts || 0;
+      const rowAvg = row.context_avg_files || 0;
+      m.weighted_context_sum += (rowAvg * rowPrompts);
   }
 
-  // Finalize averages
-  for (const m of userMetricsMap.values()) {
-      if (m.days_active > 0) {
-          m.avg_context_files = m.avg_context_files / m.days_active;
-      }
+  // Convert to UserMetrics
+  const userMetricsMap = new Map<string, UserMetrics>();
+  for (const agg of userAggregates.values()) {
+      const days_active = agg.active_dates.size;
+      const avg_context_files = agg.total_prompts > 0
+          ? agg.weighted_context_sum / agg.total_prompts
+          : 0;
+
+      userMetricsMap.set(agg.user_id, {
+          user_id: agg.user_id,
+          total_prompts: agg.total_prompts,
+          accepted_count: agg.accepted_count,
+          retry_count: agg.retry_count,
+          days_active: days_active,
+          avg_context_files: avg_context_files
+      });
   }
 
   // 3. Evaluate cohorts

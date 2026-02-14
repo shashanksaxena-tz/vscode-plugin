@@ -222,4 +222,67 @@ describe('cohortDetection', () => {
     // logAudit should NOT be called because user was already a member
     expect(logAudit).not.toHaveBeenCalled();
   });
+
+  it('should correctly calculate days_active with multiple platforms per day', async () => {
+    const mockMetrics = [
+      {
+        user_id: 'user4@example.com',
+        total_prompts: 30, // 30
+        accepted_count: 5,
+        retry_count: 0,
+        context_avg_files: 3,
+        date: '2023-01-01', // Day 1
+        platform: 'vscode'
+      },
+      {
+        user_id: 'user4@example.com',
+        total_prompts: 30, // 30 + 30 = 60 total
+        accepted_count: 5, // 10 total accepted. 10/60 = 16.6% < 40% (Over-prompters match on rate)
+        retry_count: 0,
+        context_avg_files: 3,
+        date: '2023-01-01', // Day 1 (Duplicate date)
+        platform: 'intellij'
+      },
+    ];
+    // Total prompts = 60.
+    // Days active = 1 (unique date).
+    // Avg prompts/day = 60/1 = 60 > 50. (Matches Over-prompters criteria)
+
+    // If bug existed: days active = 2. Avg prompts/day = 30 < 50. (Would NOT match)
+
+    // 1. fetch metrics
+    queueResponse({ data: mockMetrics, error: null });
+
+    // Cohort 1: Over-prompters (MATCH expected)
+    queueResponse({ data: { id: 'c1' }, error: null });
+    queueResponse({ error: null });
+    // check member
+    queueResponse({ data: null, error: { code: 'PGRST116' } });
+    // upsert (MATCH)
+    queueResponse({ error: null });
+    // update count
+    queueResponse({ error: null });
+
+    // Cohort 2: Context-light (no match)
+    queueResponse({ data: { id: 'c2' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+
+    // Cohort 3: Retry loopers (no match)
+    queueResponse({ data: { id: 'c3' }, error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+    queueResponse({ error: null });
+
+    await cohortDetection();
+
+    expect(mockSupabase.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+            cohort_id: 'c1',
+            user_id: 'user4@example.com'
+        }),
+        expect.anything()
+    );
+  });
 });
