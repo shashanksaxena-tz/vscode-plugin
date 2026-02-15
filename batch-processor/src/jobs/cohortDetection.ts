@@ -76,8 +76,22 @@ export async function cohortDetection() {
     return;
   }
 
+  // 1.5 Fetch user mapping (Email -> UUID) because cohort_members requires UUID
+  const { data: usersData, error: usersError } = await supabase
+    .from('users')
+    .select('id, email');
+
+  const emailToUuid = new Map<string, string>();
+  if (usersData) {
+      usersData.forEach(u => emailToUuid.set(u.email, u.id));
+  } else if (usersError) {
+      console.error("Error fetching users for ID lookup:", usersError);
+  }
+
   // 2. Aggregate per user
   const userMetricsMap = new Map<string, UserMetrics>();
+  const userDatesMap = new Map<string, Set<string>>();
+  const userRowCountMap = new Map<string, number>();
 
   for (const row of metricsData) {
     const userId = row.user_id;
@@ -90,22 +104,29 @@ export async function cohortDetection() {
             days_active: 0,
             avg_context_files: 0
         });
+        userDatesMap.set(userId, new Set());
+        userRowCountMap.set(userId, 0);
     }
 
     const m = userMetricsMap.get(userId)!;
     m.total_prompts += row.total_prompts || 0;
     m.accepted_count += row.accepted_count || 0;
     m.retry_count += row.retry_count || 0;
-    m.days_active += 1;
-    // Weighted average for context files? Or just simple average of daily avgs?
-    // Let's do simple average of daily averages for now.
     m.avg_context_files += row.context_avg_files || 0;
+
+    userDatesMap.get(userId)!.add(row.date);
+    userRowCountMap.set(userId, userRowCountMap.get(userId)! + 1);
   }
 
   // Finalize averages
-  for (const m of userMetricsMap.values()) {
-      if (m.days_active > 0) {
-          m.avg_context_files = m.avg_context_files / m.days_active;
+  for (const [userId, m] of userMetricsMap) {
+      const dates = userDatesMap.get(userId)!;
+      const rowCount = userRowCountMap.get(userId)!;
+
+      m.days_active = dates.size;
+
+      if (rowCount > 0) {
+          m.avg_context_files = m.avg_context_files / rowCount;
       }
   }
 
@@ -162,13 +183,19 @@ export async function cohortDetection() {
 
     // Identify members
     for (const userMetrics of userMetricsMap.values()) {
+        const userUuid = emailToUuid.get(userMetrics.user_id);
+        if (!userUuid) {
+            console.warn(`Skipping user ${userMetrics.user_id} for cohort assignment (No UUID found).`);
+            continue;
+        }
+
         if (cohortDef.check(userMetrics)) {
             // Check if already in cohort to avoid spamming emails (optimization)
             const { data: existingMember } = await supabase
                 .from('cohort_members')
                 .select('joined_at')
                 .eq('cohort_id', cohortId)
-                .eq('user_id', userMetrics.user_id)
+                .eq('user_id', userUuid)
                 .single();
 
             // Add to cohort
@@ -176,12 +203,12 @@ export async function cohortDetection() {
                 .from('cohort_members')
                 .upsert({
                     cohort_id: cohortId,
-                    user_id: userMetrics.user_id,
+                    user_id: userUuid,
                     joined_at: existingMember ? existingMember.joined_at : new Date().toISOString()
                 }, { onConflict: 'cohort_id,user_id' }); // Conflict on PK
 
             if (memberError) {
-                console.error(`Error adding user ${userMetrics.user_id} to cohort ${cohortDef.name}:`, memberError);
+                console.error(`Error adding user ${userMetrics.user_id} (${userUuid}) to cohort ${cohortDef.name}:`, memberError);
             } else {
                 memberCount++;
 
@@ -224,7 +251,7 @@ export async function cohortDetection() {
                 .from('cohort_members')
                 .delete()
                 .eq('cohort_id', cohortId)
-                .eq('user_id', userMetrics.user_id);
+                .eq('user_id', userUuid);
 
             if (removeError) {
                  // console.error(`Error removing user ${userMetrics.user_id} from cohort ${cohortDef.name}:`, removeError);
@@ -232,13 +259,7 @@ export async function cohortDetection() {
         }
     }
 
-    // Update member count
-    await supabase
-        .from('cohorts')
-        .update({ member_count: memberCount })
-        .eq('id', cohortId);
-
-    console.log(`Cohort ${cohortDef.name} updated with ${memberCount} members.`);
+    // Member count is automatically updated by the database trigger 'on_cohort_member_change'
   }
 
   console.log("Cohort detection job completed.");
