@@ -37,25 +37,6 @@ jest.mock('../../utils/audit', () => ({
 describe('Cohort Detection Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Default mock behavior
-    mockSupabase.from.mockImplementation((table: string) => {
-        const chain: any = {
-            select: mockSelect,
-            eq: mockEq,
-            gte: mockGte,
-            single: mockSingle,
-            upsert: mockUpsert,
-            update: mockUpdate,
-            insert: mockInsert,
-            delete: mockDelete,
-        };
-        // Allow chaining
-        mockSelect.mockReturnValue(chain);
-        mockEq.mockReturnValue(chain);
-        mockGte.mockReturnValue(chain);
-        return chain;
-    });
   });
 
   it('correctly handles multi-platform usage on the same day', async () => {
@@ -81,7 +62,7 @@ describe('Cohort Detection Integration', () => {
     ];
 
     // Override specific calls
-    mockGte.mockResolvedValueOnce({ data: mockMetrics, error: null });
+    // mockGte.mockResolvedValueOnce({ data: mockMetrics, error: null });
 
     // Mock cohorts lookup to return specific IDs
     // We need to differentiate based on the `eq` call which happens BEFORE `single`
@@ -98,6 +79,12 @@ describe('Cohort Detection Integration', () => {
                 gte: jest.fn().mockResolvedValue({ data: mockMetrics, error: null })
             };
         }
+        // New requirement: Fetch users for ID lookup
+        if (table === 'users') {
+             return {
+                 select: jest.fn().mockResolvedValue({ data: [{ email: 'multi-platform', id: 'uuid-multi' }], error: null })
+             };
+        }
         if (table === 'cohorts') {
             return {
                 select: jest.fn().mockReturnThis(),
@@ -108,9 +95,13 @@ describe('Cohort Detection Integration', () => {
                         return { error: null };
                     }
 
-                    const id = val === 'Over-prompters' ? 'c_over' :
-                               val === 'Context-light users' ? 'c_light' :
-                               'c_retry';
+                    // This logic simulates finding a cohort by name
+                    // But wait, the code does .eq('name', cohortDef.name).single()
+                    // So `val` here is the cohort name.
+                    let id = 'c_retry';
+                    if (val === 'Over-prompters') id = 'c_over';
+                    if (val === 'Context-light users') id = 'c_light';
+
                     return {
                         single: jest.fn().mockResolvedValue({ data: { id }, error: null }),
                         update: jest.fn().mockResolvedValue({ error: null }),
@@ -134,19 +125,24 @@ describe('Cohort Detection Integration', () => {
     await cohortDetection();
 
     // Check if 'Over-prompters' (c_over) upsert happened
-    // The user 'multi-platform' has 60 total prompts.
-    // If logic counts days=2, avg=30 -> No upsert.
-    // If logic counts days=1, avg=60 -> Upsert.
+    // The user 'multi-platform' has 60 total prompts (30+30).
+    // If logic counts days=2 (incorrect), avg=30 -> No upsert.
+    // If logic counts days=1 (correct), avg=60 -> Upsert.
 
     // We expect the user to be added to Over-prompters if logic is correct.
+    // Logic uses UUID now, so we check for uuid-multi
     const upsertCalls = mockUpsert.mock.calls;
+
+    // Debug info if test fails
+    // console.log("Upsert calls:", JSON.stringify(upsertCalls));
+
     const addedToOverPrompters = upsertCalls.some(call =>
-        call[0].cohort_id === 'c_over' && call[0].user_id === 'multi-platform'
+        call[0].cohort_id === 'c_over' && call[0].user_id === 'uuid-multi'
     );
 
     // Check 'Context-light': avg files = 2. Criteria < 2. Should NOT be added.
     const addedToContextLight = upsertCalls.some(call =>
-        call[0].cohort_id === 'c_light' && call[0].user_id === 'multi-platform'
+        call[0].cohort_id === 'c_light' && call[0].user_id === 'uuid-multi'
     );
 
     // If addedToOverPrompters is false, it means the bug exists.

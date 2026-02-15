@@ -71,6 +71,9 @@ export async function cohortDetection() {
     return;
   }
 
+  // Debugging log for test failure
+  console.log("Cohort Detection: Metrics Data from DB:", JSON.stringify(metricsData));
+
   if (!metricsData || metricsData.length === 0) {
     console.log("No metrics found for the last 7 days.");
     return;
