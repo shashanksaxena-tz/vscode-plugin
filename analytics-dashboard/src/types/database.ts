@@ -109,7 +109,20 @@ export interface Database {
           updated_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["cohorts"]["Row"], "id" | "created_at" | "updated_at">;
-        Update: Partial<Database["public"]["Tables"]["cohorts"]["Insert"]>;
+        Update: any;
+      };
+      cohort_members: {
+        Row: {
+          cohort_id: string;
+          user_id: string;
+          joined_at: string;
+        };
+        Insert: {
+          cohort_id: string;
+          user_id: string;
+          joined_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["cohort_members"]["Insert"]>;
       };
       audit_logs: {
         Row: {
