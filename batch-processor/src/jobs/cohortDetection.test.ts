@@ -1,6 +1,7 @@
 import { cohortDetection } from './cohortDetection';
 import { createClient } from '../utils/supabase';
 import { logAudit } from '../utils/audit';
+import { EmailService } from '../services/email';
 
 // Mock the Supabase client
 jest.mock('../utils/supabase', () => ({
@@ -12,13 +13,23 @@ jest.mock('../utils/audit', () => ({
   logAudit: jest.fn(),
 }));
 
+// Mock EmailService
+jest.mock('../services/email');
+
 describe('cohortDetection', () => {
   let mockSupabase: any;
   let responseQueue: any[] = [];
+  let mockEmailService: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
     responseQueue = [];
+
+    // Mock EmailService implementation
+    mockEmailService = {
+      sendEmail: jest.fn().mockResolvedValue({ messageId: 'test-id' })
+    };
+    (EmailService as any).mockImplementation(() => mockEmailService);
 
     // Create a mock client that returns itself for chaining
     // and implements a thenable interface for awaiting
