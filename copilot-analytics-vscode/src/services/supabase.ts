@@ -23,7 +23,8 @@ export class SupabaseService {
   }
 
   async insertEvents(events: TelemetryEvent[]) {
-    const records: Database['public']['Tables']['events']['Insert'][] = events.map(e => ({
+    // We cast to any first, then to the expected Insert type because metadata is complex
+    const records = events.map(e => ({
       user_id: e.user_id,
       session_id: e.session_id,
       timestamp: e.timestamp,
@@ -32,8 +33,8 @@ export class SupabaseService {
       model: e.model,
       prompt_encrypted: e.prompt_encrypted,
       response_encrypted: e.response_encrypted,
-      metadata: e.metadata,
-    }));
+      metadata: e.metadata as unknown as Database['public']['Tables']['events']['Insert']['metadata'],
+    })) as Database['public']['Tables']['events']['Insert'][];
 
     const { error } = await this.client
       .from('events')
