@@ -86,6 +86,7 @@ All prompt/response data is encrypted *client-side* using AES-256-CBC.
 
 ### Verification Scripts
 - **Encryption**: Run `npx ts-node scripts/verify_encryption.ts` inside `batch-processor/` to verify end-to-end encryption compatibility between client (simulated) and server logic.
+- **Deployment**: Run `./scripts/verify_deployment.sh` to verify build and tests.
 
 ## Testing Strategy
 - **Unit Tests**: Required for all new logic.
