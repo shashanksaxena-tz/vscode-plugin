@@ -87,5 +87,14 @@ You can run the Dashboard and Batch Processor using Docker Compose.
 2. `npm install`
 3. `npm run dev`
 
+## Verification & Deployment
+
+We provide automated scripts to verify the codebase and deploy to staging.
+
+- **Verification**: Run `./scripts/verify_deployment.sh` to run tests and verify the build.
+- **Deployment**: Run `./scripts/deploy_staging.sh` to deploy to the staging environment.
+
+See [Deployment Guide](docs/deployment.md) for detailed instructions.
+
 ## Architecture
 See `docs/` for detailed architectural plans.

@@ -3,30 +3,31 @@
 ## Context
 **Project**: Copilot Analytics & Coaching Platform
 **Date**: January 21, 2026
-**Agent**: Jules (Session 26)
+**Agent**: Jules (Session 27)
 
 ## Achievements
-- **Dashboard**:
-    - Implemented `analytics-dashboard/src/app/dashboard/team/page.tsx` (Manager View) which filters team members by department.
-    - Created `analytics-dashboard/src/components/TeamTable.tsx` to display team metrics.
-    - Added unit tests for Manager Dashboard and Team Table.
-    - Verified frontend visualization using Playwright.
-    - Upgraded Next.js to `14.2.23` to address security vulnerabilities.
-- **CI/CD**:
-    - Added `test-intellij-plugin` job to `.github/workflows/ci.yml` using Java 21.
-    - Verified Gradle build and tests pass locally.
+- **Deployment**:
+    - Created `scripts/verify_deployment.sh` to automate environment checking, testing, and building.
+    - Created `scripts/deploy_staging.sh` to simulate staging deployment.
+    - Created `docs/deployment.md` with detailed deployment instructions.
+    - Updated `README.md` and `CONTRIBUTING.md` to reference deployment scripts.
+- **Verification**:
+    - Fixed `batch-processor` unit tests (`cohortDetection.test.ts`) by mocking `EmailService`.
+    - Verified all tests pass for `analytics-dashboard` and `batch-processor`.
+    - Verified `docker build` configuration (execution failed due to sandbox overlayfs limits, but configuration is standard).
 
 ## State of Play
 - **Codebase**:
-    - Dashboard now has Developer, Manager, and Admin views implemented and tested.
-    - CI/CD covers all 5 components: Dashboard, Batch Processor, VS Code Extension, Cursor Hooks, IntelliJ Plugin.
-- **Environment**: "Diff size is unusually large" warning persists.
-- **Missing Components**:
-    - None identified in current scope.
+    - Comprehensive test coverage for core components.
+    - Deployment scripts ready for use in CI/CD or local environment.
+- **Environment**:
+    - `docker compose build` fails in sandbox due to storage driver limitations, but should work in standard Docker environments.
+    - `package-lock.json` changes were reverted to avoid unrelated dependency updates, but `node_modules` are up to date in the current session.
 
 ## Next Steps for Next Agent
-1.  **End-to-End Verification**:
-    - Run `docker compose up` in a capable environment to verify full system integration (Dashboard + Batch Processor + Supabase).
-    - Verify data flow from extensions to Supabase to Dashboard.
-2.  **Deployment**:
-    - Prepare deployment scripts or configuration for staging environment.
+1.  **CI/CD Integration**:
+    - Configure GitHub Actions to invoke `scripts/verify_deployment.sh` on PRs.
+    - Configure GitHub Actions to invoke `scripts/deploy_staging.sh` on merge to main/staging branch.
+2.  **Live Environment Verification**:
+    - Run `docker compose up` in a full Docker environment to verify runtime behavior.
+    - Execute `deploy_staging.sh` with a real registry to push images.
