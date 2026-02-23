@@ -32,7 +32,7 @@ export class SupabaseService {
       model: e.model,
       prompt_encrypted: e.prompt_encrypted,
       response_encrypted: e.response_encrypted,
-      metadata: e.metadata,
+      metadata: e.metadata as unknown as Database['public']['Tables']['events']['Insert']['metadata'],
     }));
 
     const { error } = await this.client
