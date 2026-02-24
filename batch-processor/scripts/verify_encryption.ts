@@ -1,6 +1,7 @@
 import * as CryptoJS from 'crypto-js';
 import { EncryptionService as ServerEncryptionService } from '../src/utils/encryption';
 import dotenv from 'dotenv';
+import { execSync } from 'child_process';
 
 dotenv.config();
 
@@ -69,7 +70,6 @@ async function verifyEncryption() {
 
         if (originalText === decryptedLegacy) {
              console.log("SUCCESS: Legacy passphrase decryption matches.");
-             process.exit(0);
         } else {
              console.error("FAILURE: Legacy passphrase decryption mismatch.");
              console.error(`Expected: "${originalText}"`);
@@ -81,6 +81,55 @@ async function verifyEncryption() {
         console.error("FAILURE: Decrypted text does not match original text.");
         console.error(`Expected: "${originalText}"`);
         console.error(`Got: "${decryptedText}"`);
+        process.exit(1);
+    }
+
+    // 5. Verify OpenSSL Compatibility (Standard AES-256-CBC)
+    console.log("\nVerifying OpenSSL Compatibility...");
+
+    // Restore Hex Key
+    process.env.ENCRYPTION_KEY = hexKey;
+    const serverStandard = new ServerEncryptionService();
+
+    // Generate random IV for OpenSSL test
+    const ivHex = CryptoJS.lib.WordArray.random(16).toString(CryptoJS.enc.Hex);
+    const plainText = "Standard AES-256-CBC Test";
+
+    try {
+        // Encrypt with OpenSSL
+        // echo -n "..." | openssl enc -aes-256-cbc -K <key> -iv <iv> -base64
+        // Note: openssl expects hex key and hex IV.
+        // We use -nosalt because we provide explicit Key and IV.
+        // We use -e for encrypt.
+        // We use -A for base64 without line breaks.
+        const opensslCmd = `echo -n "${plainText}" | openssl enc -aes-256-cbc -K ${hexKey} -iv ${ivHex} -base64 -A`;
+        const opensslEncrypted = execSync(opensslCmd).toString().trim();
+        console.log(`OpenSSL Encrypted Ciphertext (Base64): ${opensslEncrypted}`);
+
+        // Construct the format our service expects: Base64(IV + Ciphertext)
+
+        // IV (16 bytes)
+        const ivWords = CryptoJS.enc.Hex.parse(ivHex);
+        // Ciphertext (from OpenSSL output)
+        const ciphertextWords = CryptoJS.enc.Base64.parse(opensslEncrypted);
+
+        const combined = ivWords.clone().concat(ciphertextWords);
+        const combinedBase64 = combined.toString(CryptoJS.enc.Base64);
+
+        const decryptedByService = serverStandard.decrypt(combinedBase64);
+        console.log(`Decrypted by Service: "${decryptedByService}"`);
+
+        if (decryptedByService === plainText) {
+            console.log("SUCCESS: Service can decrypt OpenSSL output.");
+            process.exit(0);
+        } else {
+            console.error("FAILURE: Service failed to decrypt OpenSSL output.");
+            process.exit(1);
+        }
+
+    } catch (e) {
+        console.error("OpenSSL verification failed (is openssl installed?)", e);
+        // We fail if openssl is not available because this verification is crucial
         process.exit(1);
     }
 }
