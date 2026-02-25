@@ -2,31 +2,37 @@
 
 ## Context
 **Project**: Copilot Analytics & Coaching Platform
-**Date**: January 21, 2026
-**Agent**: Jules (Session 26)
+**Date**: February 24, 2026
+**Agent**: Jules (Session 57)
 
 ## Achievements
-- **Dashboard**:
-    - Implemented `analytics-dashboard/src/app/dashboard/team/page.tsx` (Manager View) which filters team members by department.
-    - Created `analytics-dashboard/src/components/TeamTable.tsx` to display team metrics.
-    - Added unit tests for Manager Dashboard and Team Table.
-    - Verified frontend visualization using Playwright.
-    - Upgraded Next.js to `14.2.23` to address security vulnerabilities.
-- **CI/CD**:
-    - Added `test-intellij-plugin` job to `.github/workflows/ci.yml` using Java 21.
-    - Verified Gradle build and tests pass locally.
+- **Dashboard Integration Tests**:
+    - Created `analytics-dashboard/__tests__/pages/Dashboard.test.tsx` to verify the main developer dashboard (`src/app/dashboard/page.tsx`).
+    - The test mocks Supabase client and verifies:
+        - Redirection for unauthenticated users.
+        - Rendering of ScoreCards, MetricsChart, and SuggestionsList with mock data.
+        - Graceful handling of empty data states.
+    - Fixed a potential unhandled promise rejection in tests by properly mocking `next/navigation`'s `redirect`.
+- **Database Analysis**:
+    - Investigated adding relationships for `daily_metrics` and `quality_scores` in `database.ts`.
+    - Determined that the current database schema lacks foreign key constraints for `user_id` (email) -> `users(email)`, preventing `supabase-js` from automatically handling joins.
+    - Decided not to modify `database.ts` relationships without corresponding schema changes to avoid runtime errors.
 
 ## State of Play
 - **Codebase**:
-    - Dashboard now has Developer, Manager, and Admin views implemented and tested.
-    - CI/CD covers all 5 components: Dashboard, Batch Processor, VS Code Extension, Cursor Hooks, IntelliJ Plugin.
-- **Environment**: "Diff size is unusually large" warning persists.
-- **Missing Components**:
-    - None identified in current scope.
+    - Dashboard test coverage improved.
+    - All tests in `analytics-dashboard` are passing (with some console warnings in other components).
+    - Backend E2E tests remain valid.
+- **Environment**:
+    - Same constraints as before (Docker build limitations).
 
 ## Next Steps for Next Agent
-1.  **End-to-End Verification**:
-    - Run `docker compose up` in a capable environment to verify full system integration (Dashboard + Batch Processor + Supabase).
-    - Verify data flow from extensions to Supabase to Dashboard.
-2.  **Deployment**:
-    - Prepare deployment scripts or configuration for staging environment.
+1.  **Database Foreign Keys**:
+    - Create a migration to add foreign key constraints:
+        - `daily_metrics.user_id` -> `users.email`
+        - `quality_scores.user_id` -> `users.email`
+    - After migration, update `analytics-dashboard/src/types/database.ts` to include these relationships.
+2.  **Admin Dashboard Tests**:
+    - Improve test coverage for `analytics-dashboard/src/app/dashboard/admin/page.tsx`. Current tests (`AdminDashboard.test.tsx`) show console errors regarding `supabase.from(...).select(...).order` mocking.
+3.  **Deployment**:
+    - Continue with staging deployment preparation if environment capabilities allow.
