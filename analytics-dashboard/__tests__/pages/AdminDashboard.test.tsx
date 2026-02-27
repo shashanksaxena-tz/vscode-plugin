@@ -9,7 +9,9 @@ jest.mock('@/lib/supabase/server', () => ({
 }));
 
 jest.mock('next/navigation', () => ({
-  redirect: jest.fn(),
+  redirect: jest.fn().mockImplementation(() => {
+    throw new Error("NEXT_REDIRECT");
+  }),
 }));
 
 jest.mock('@/components/AuditLogTable', () => ({

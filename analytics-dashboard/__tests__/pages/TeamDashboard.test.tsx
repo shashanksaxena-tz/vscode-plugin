@@ -87,6 +87,7 @@ describe('TeamDashboardPage', () => {
           const chain = {
             eq: jest.fn().mockReturnThis(),
             is: jest.fn().mockReturnThis(),
+            returns: jest.fn().mockReturnThis(),
             single: jest.fn().mockResolvedValue({
               data: { role: 'manager', department: 'Engineering' },
               error: null
@@ -108,9 +109,11 @@ describe('TeamDashboardPage', () => {
           return {
             select: jest.fn().mockReturnValue({
               in: jest.fn().mockReturnValue({
-                order: jest.fn().mockResolvedValue({
-                  data: mockScores,
-                  error: null
+                order: jest.fn().mockReturnValue({
+                    returns: jest.fn().mockResolvedValue({
+                        data: mockScores,
+                        error: null
+                    })
                 }),
               }),
             }),

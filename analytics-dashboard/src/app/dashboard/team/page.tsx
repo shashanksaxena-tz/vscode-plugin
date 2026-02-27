@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { TeamTable, TeamMember } from "@/components/TeamTable";
+import { Database } from "@/types/database";
 
 export default async function TeamDashboardPage() {
   const supabase = await createClient();
@@ -13,7 +14,7 @@ export default async function TeamDashboardPage() {
     .from("users")
     .select("*")
     .eq("email", user.email!)
-    .single();
+    .single<Database["public"]["Tables"]["users"]["Row"]>();
 
   if (userError || !currentUserData) {
     console.error("Error fetching user data:", userError);
@@ -41,7 +42,7 @@ export default async function TeamDashboardPage() {
     }
     // Admin sees all, so no filter added.
 
-    const { data: usersData, error: usersFetchError } = await query;
+    const { data: usersData, error: usersFetchError } = await query.returns<Database["public"]["Tables"]["users"]["Row"][]>();
 
     if (usersFetchError) throw usersFetchError;
 
@@ -53,7 +54,8 @@ export default async function TeamDashboardPage() {
         .from("quality_scores")
         .select("*")
         .in("user_id", userEmails)
-        .order("week_start_date", { ascending: false });
+        .order("week_start_date", { ascending: false })
+        .returns<Database["public"]["Tables"]["quality_scores"]["Row"][]>();
 
       if (scoresError) throw scoresError;
 
