@@ -32,12 +32,13 @@ export class SupabaseService {
       model: e.model,
       prompt_encrypted: e.prompt_encrypted,
       response_encrypted: e.response_encrypted,
-      metadata: e.metadata,
+      metadata: e.metadata as unknown as Database['public']['Tables']['events']['Insert']['metadata'],
     }));
 
     const { error } = await this.client
       .from('events')
-      .insert(records);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .insert(records as any);
 
     if (error) throw error;
   }
@@ -51,6 +52,6 @@ export class SupabaseService {
       .single();
 
     if (error) return 0;
-    return data?.overall_score || 0;
+    return (data as unknown as { overall_score: number })?.overall_score || 0;
   }
 }
