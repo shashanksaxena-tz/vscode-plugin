@@ -9,7 +9,11 @@ jest.mock('@/lib/supabase/server', () => ({
 }));
 
 jest.mock('next/navigation', () => ({
-  redirect: jest.fn(),
+  redirect: jest.fn().mockImplementation(() => {
+    const error = new Error('NEXT_REDIRECT');
+    (error as any).digest = 'NEXT_REDIRECT';
+    throw error;
+  }),
 }));
 
 jest.mock('@/components/AuditLogTable', () => ({
@@ -34,6 +38,7 @@ describe('AdminDashboardPage', () => {
       auth: {
         getUser: jest.fn().mockResolvedValue({ data: { user: null } }),
       },
+      from: jest.fn(), // Prevent TypeError if redirect fails
     });
 
     try {
@@ -53,15 +58,20 @@ describe('AdminDashboardPage', () => {
           data: { user: { email: 'user@example.com' } }
         }),
       },
-      from: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { role: 'developer' },
-              error: null
+      from: jest.fn().mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { role: 'developer' },
+                  error: null
+                }),
+              }),
             }),
-          }),
-        }),
+          };
+        }
+        return { select: jest.fn() };
       }),
     });
 
