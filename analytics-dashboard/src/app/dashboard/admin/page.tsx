@@ -50,11 +50,11 @@ export default async function AdminDashboardPage() {
     auditLogs = logs as AuditLog[] | null;
 
   } catch (e) {
-    console.error("Unexpected error loading admin dashboard:", e);
     // If it was a redirect error (from Next.js), rethrow it
     if ((e as any)?.digest?.startsWith('NEXT_REDIRECT')) {
         throw e;
     }
+    console.error("Unexpected error loading admin dashboard:", e);
     error = "Failed to load audit logs. Please try again later.";
   }
 
