@@ -116,6 +116,29 @@ describe('TeamDashboardPage', () => {
             }),
           };
         }
+
+        if (table === 'cohort_members') {
+          return {
+            select: jest.fn().mockReturnValue({
+              in: jest.fn().mockResolvedValue({
+                data: [{ user_id: 'alice@example.com', cohort_id: 'c1' }],
+                error: null
+              })
+            })
+          };
+        }
+
+        if (table === 'cohorts') {
+          return {
+            select: jest.fn().mockReturnValue({
+              in: jest.fn().mockResolvedValue({
+                data: [{ id: 'c1', name: 'Test Cohort', coaching_plan: 'Test Plan' }],
+                error: null
+              })
+            })
+          };
+        }
+
         return { select: jest.fn() };
       }),
     });

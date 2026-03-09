@@ -3,10 +3,10 @@ import { TelemetryEvent } from '../types/events';
 import { Database } from '../types/database';
 
 export class SupabaseService {
-  private client: SupabaseClient<Database>;
+  private client: SupabaseClient;
 
   constructor(url: string, anonKey: string) {
-    this.client = createClient<Database>(url, anonKey);
+    this.client = createClient(url, anonKey);
   }
 
   async authenticate(githubToken: string) {
@@ -32,7 +32,7 @@ export class SupabaseService {
       model: e.model,
       prompt_encrypted: e.prompt_encrypted,
       response_encrypted: e.response_encrypted,
-      metadata: e.metadata,
+      metadata: e.metadata as any,
     }));
 
     const { error } = await this.client
