@@ -1,4 +1,6 @@
 import { AnthropicProvider } from "./anthropic";
+import { OpenAIProvider } from "./openai";
+import { GeminiProvider } from "./gemini";
 
 export interface LLMAnalysisResult {
   score: number;
@@ -11,6 +13,16 @@ export interface LLMProvider {
 }
 
 export function getLLMProvider(): LLMProvider {
-  // Default to Anthropic for now
-  return new AnthropicProvider();
+  const provider = process.env.LLM_PROVIDER || "anthropic";
+
+  switch (provider) {
+    case "anthropic":
+      return new AnthropicProvider();
+    case "openai":
+      return new OpenAIProvider();
+    case "gemini":
+      return new GeminiProvider();
+    default:
+      return new AnthropicProvider();
+  }
 }
