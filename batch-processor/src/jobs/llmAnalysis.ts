@@ -8,7 +8,7 @@ const BATCH_SIZE = 50;
 
 export async function llmAnalysis() {
   const supabase = createClient();
-  const llm = getLLMProvider();
+  const llm = await getLLMProvider();
   const encryption = new EncryptionService();
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
