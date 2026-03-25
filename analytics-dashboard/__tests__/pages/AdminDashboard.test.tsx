@@ -9,7 +9,11 @@ jest.mock('@/lib/supabase/server', () => ({
 }));
 
 jest.mock('next/navigation', () => ({
-  redirect: jest.fn(),
+  redirect: jest.fn().mockImplementation(() => {
+    const error = new Error('NEXT_REDIRECT');
+    (error as any).digest = 'NEXT_REDIRECT';
+    throw error;
+  }),
 }));
 
 jest.mock('@/components/AuditLogTable', () => ({
@@ -34,6 +38,7 @@ describe('AdminDashboardPage', () => {
       auth: {
         getUser: jest.fn().mockResolvedValue({ data: { user: null } }),
       },
+      from: jest.fn(), // Prevent TypeError if redirect fails
     });
 
     try {
@@ -53,15 +58,43 @@ describe('AdminDashboardPage', () => {
           data: { user: { email: 'user@example.com' } }
         }),
       },
-      from: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { role: 'developer' },
-              error: null
+      from: jest.fn().mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { role: 'developer' },
+                  error: null
+                }),
+              }),
             }),
-          }),
-        }),
+          };
+        }
+        if (table === 'cohorts') {
+          return {
+            select: jest.fn().mockResolvedValue({ count: 5, error: null }),
+          };
+        }
+        if (table === 'system_settings') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { value: 'openai' }, error: null }),
+              }),
+            }),
+          };
+        }
+        if (table === 'events') {
+          return {
+            select: jest.fn().mockReturnValue({
+              gte: jest.fn().mockReturnValue({
+                returns: jest.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn().mockResolvedValue({ data: null, error: null, count: null }) };
       }),
     });
 
@@ -90,13 +123,24 @@ describe('AdminDashboardPage', () => {
       from: jest.fn().mockImplementation((table) => {
         if (table === 'users') {
           return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: { role: 'admin' },
-                  error: null
+            select: jest.fn().mockImplementation((columns) => {
+              // the component makes two calls to `users`:
+              // 1. `select("role").eq(...)`
+              // 2. `select("*", { count: "exact", head: true })` which doesn't chain `.eq`
+              const chain: any = {
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({
+                    data: { role: 'admin' },
+                    error: null
+                  }),
                 }),
-              }),
+              };
+
+              if (columns === "*") {
+                return Promise.resolve({ count: 10, error: null });
+              }
+
+              return chain;
             }),
           };
         }
