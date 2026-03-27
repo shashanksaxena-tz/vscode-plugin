@@ -1,0 +1,15 @@
+
+> analytics-dashboard@1.0.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+  ▲ Next.js 14.2.23
+  - Local:        http://localhost:3001
+
+ ✓ Starting...
+ ✓ Ready in 1876ms
+ ○ Compiling /test-ui ...
+ ✓ Compiled /test-ui in 8.4s (1059 modules)
+ ✓ Compiled in 1243ms (265 modules)
+ GET /test-ui 200 in 9643ms
+ ✓ Compiled in 419ms (222 modules)
