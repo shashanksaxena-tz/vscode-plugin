@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Database } from "@/types/database";
 import { AuditLogTable } from "@/components/AuditLogTable";
+import { SystemConfigurationForm } from "@/components/SystemConfigurationForm";
 
 type AuditLog = Database["public"]["Tables"]["audit_logs"]["Row"];
 
@@ -50,12 +51,52 @@ export default async function AdminDashboardPage() {
     auditLogs = logs as AuditLog[] | null;
 
   } catch (e) {
-    console.error("Unexpected error loading admin dashboard:", e);
     // If it was a redirect error (from Next.js), rethrow it
     if ((e as any)?.digest?.startsWith('NEXT_REDIRECT')) {
         throw e;
     }
-    error = "Failed to load audit logs. Please try again later.";
+    console.error("Unexpected error loading admin dashboard:", e);
+    error = "Failed to load admin dashboard data. Please try again later.";
+  }
+
+  // Fetch System Overview Metrics
+  let totalUsers = 0;
+  let activeUsers = 0;
+  let totalCohorts = 0;
+  let activeLlmProvider = "anthropic"; // default fallback
+
+  try {
+    const [{ count: usersCount }, { count: cohortsCount }, { data: settingsData }] = await Promise.all([
+      supabase.from("users").select("*", { count: "exact", head: true }),
+      supabase.from("cohorts").select("*", { count: "exact", head: true }),
+      supabase.from("system_settings").select("value").eq("key", "LLM_PROVIDER").single<{ value: string }>()
+    ]);
+
+    totalUsers = usersCount || 0;
+    totalCohorts = cohortsCount || 0;
+
+    if (settingsData?.value) {
+      activeLlmProvider = String(settingsData.value);
+    } else {
+      activeLlmProvider = process.env.NEXT_PUBLIC_LLM_PROVIDER || "anthropic";
+    }
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Active users: count distinct users who had an event in the last 7 days
+    const { data: recentEvents } = await supabase
+      .from("events")
+      .select("user_id")
+      .gte("timestamp", sevenDaysAgo.toISOString())
+      .returns<{ user_id: string }[]>();
+
+    if (recentEvents) {
+      const uniqueActiveUsers = new Set(recentEvents.map(e => e.user_id));
+      activeUsers = uniqueActiveUsers.size;
+    }
+  } catch (e) {
+    console.error("Error fetching system overview metrics:", e);
   }
 
   return (
@@ -74,6 +115,23 @@ export default async function AdminDashboardPage() {
           &larr; Back to Dashboard
         </a>
       </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-sm font-medium text-gray-500 uppercase">Total Users</h3>
+          <p className="mt-2 text-4xl font-bold text-gray-900">{totalUsers}</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-sm font-medium text-gray-500 uppercase">Active Users (7d)</h3>
+          <p className="mt-2 text-4xl font-bold text-gray-900">{activeUsers}</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-sm font-medium text-gray-500 uppercase">Total Cohorts</h3>
+          <p className="mt-2 text-4xl font-bold text-gray-900">{totalCohorts}</p>
+        </div>
+      </div>
+
+      <SystemConfigurationForm initialProvider={activeLlmProvider} />
 
       <AuditLogTable logs={auditLogs} />
     </div>

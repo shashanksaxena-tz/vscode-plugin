@@ -59,7 +59,7 @@ export async function ruleBasedScoring() {
   }
 }
 
-function calculateEffectivenessScore(metrics: any[]): number {
+export function calculateEffectivenessScore(metrics: any[]): number {
   if (metrics.length === 0) return 50;
 
   const totalPrompts = metrics.reduce((sum, m) => sum + m.total_prompts, 0);
@@ -74,14 +74,17 @@ function calculateEffectivenessScore(metrics: any[]): number {
   return Math.round(Math.min(100, Math.max(0, acceptanceRate * 80 + (1 - retryRate) * 20)));
 }
 
-function calculateEfficiencyScore(metrics: any[]): number {
+export function calculateEfficiencyScore(metrics: any[]): number {
   if (metrics.length === 0) return 50;
 
-  const avgLatency = metrics.reduce((sum, m) => sum + m.avg_response_time_ms, 0) / metrics.length;
-  const avgTokens = metrics.reduce((sum, m) => sum + m.total_tokens_used, 0) / metrics.length;
+  const totalPrompts = metrics.reduce((sum, m) => sum + m.total_prompts, 0);
+  if (totalPrompts === 0) return 50;
 
-  const latencyScore = Math.max(0, 100 - avgLatency / 100);
-  const tokenScore = avgTokens < 10000 ? 100 : Math.max(0, 100 - (avgTokens - 10000) / 1000);
+  const avgLatency = metrics.reduce((sum, m) => sum + (m.avg_response_time_ms * m.total_prompts), 0) / totalPrompts;
+  const avgTokensPerPrompt = metrics.reduce((sum, m) => sum + m.total_tokens_used, 0) / totalPrompts;
+
+  const latencyScore = Math.max(0, Math.min(100, 100 - avgLatency / 100));
+  const tokenScore = avgTokensPerPrompt < 2000 ? 100 : Math.max(0, Math.min(100, 100 - (avgTokensPerPrompt - 2000) / 100));
 
   return Math.round((latencyScore + tokenScore) / 2);
 }
