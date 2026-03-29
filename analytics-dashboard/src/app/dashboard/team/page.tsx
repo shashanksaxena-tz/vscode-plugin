@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { TeamTable, TeamMember } from "@/components/TeamTable";
+import { ScoreCard } from "@/components/ScoreCard";
 
 export default async function TeamDashboardPage() {
   const supabase = await createClient();
@@ -20,7 +21,7 @@ export default async function TeamDashboardPage() {
     return <div className="p-8 text-red-600">Error loading user profile. Please contact support.</div>;
   }
 
-  if (currentUserData.role !== 'manager' && currentUserData.role !== 'admin') {
+  if ((currentUserData as any).role !== 'manager' && (currentUserData as any).role !== 'admin') {
     redirect("/dashboard");
   }
 
@@ -30,9 +31,9 @@ export default async function TeamDashboardPage() {
   try {
     let query = supabase.from("users").select("*");
 
-    if (currentUserData.role === 'manager') {
-      if (currentUserData.department) {
-        query = query.eq("department", currentUserData.department);
+    if ((currentUserData as any).role === 'manager') {
+      if ((currentUserData as any).department) {
+        query = query.eq("department", (currentUserData as any).department);
       } else {
         // If manager has no department, show users with no department?
         // Or show all? Let's assume users with no department.
@@ -46,9 +47,10 @@ export default async function TeamDashboardPage() {
     if (usersFetchError) throw usersFetchError;
 
     if (usersData && usersData.length > 0) {
-      const userEmails = usersData.map(u => u.email);
+      const userEmails = usersData.map((u: any) => u.email);
+      const userIds = usersData.map((u: any) => u.id);
 
-      // Fetch scores for these users
+      // Fetch scores for these users (scores use email as user_id)
       const { data: scoresData, error: scoresError } = await supabase
         .from("quality_scores")
         .select("*")
@@ -57,14 +59,51 @@ export default async function TeamDashboardPage() {
 
       if (scoresError) throw scoresError;
 
-      // Map scores to users
-      teamMembers = usersData.map(member => {
-        const memberScores = scoresData?.filter(s => s.user_id === member.email) || [];
+      // Fetch cohort memberships (cohort_members use UUID as user_id)
+      const { data: cohortMembersData, error: cohortMembersError } = await supabase
+        .from("cohort_members")
+        .select("user_id, cohort_id")
+        .in("user_id", userIds);
+
+      if (cohortMembersError) throw cohortMembersError;
+
+      // Fetch cohorts details
+      let cohortsData: { id: string; name: string; coaching_plan: string | null; description: string | null; criteria: any }[] = [];
+      if (cohortMembersData && cohortMembersData.length > 0) {
+        const cohortIds = Array.from(new Set(cohortMembersData.map((cm: any) => cm.cohort_id)));
+        const { data: cohorts, error: cohortsError } = await supabase
+          .from("cohorts")
+          .select("id, name, coaching_plan, description, criteria")
+          .in("id", cohortIds);
+
+        if (cohortsError) throw cohortsError;
+        cohortsData = cohorts || [];
+      }
+
+      // Map scores and cohorts to users
+      teamMembers = usersData.map((member: any) => {
+        const memberScores = scoresData?.filter((s: any) => s.user_id === member.email) || [];
         // Since we ordered by date desc, the first one is the latest
         const latestScore = memberScores.length > 0 ? memberScores[0] : null;
+
+        const memberCohortIds = cohortMembersData
+            ?.filter((cm: any) => cm.user_id === member.id)
+            .map((cm: any) => cm.cohort_id) || [];
+
+        const memberCohorts = cohortsData
+            .filter(c => memberCohortIds.includes(c.id))
+            .map(c => ({
+              id: c.id,
+              name: c.name,
+              coaching_plan: c.coaching_plan,
+              description: c.description,
+              criteria: c.criteria
+            }));
+
         return {
           ...member,
-          latest_score: latestScore
+          latest_score: latestScore,
+          cohorts: memberCohorts
         };
       });
     }
@@ -73,14 +112,40 @@ export default async function TeamDashboardPage() {
     error = "Failed to load team data.";
   }
 
+  let avgOverall = 0;
+  let avgEffectiveness = 0;
+  let avgEfficiency = 0;
+
+  if (teamMembers.length > 0) {
+    let totalOverall = 0;
+    let totalEffectiveness = 0;
+    let totalEfficiency = 0;
+    let validScoresCount = 0;
+
+    for (const member of teamMembers) {
+      if (member.latest_score) {
+        totalOverall += member.latest_score.overall_score || 0;
+        totalEffectiveness += member.latest_score.effectiveness_score || 0;
+        totalEfficiency += member.latest_score.efficiency_score || 0;
+        validScoresCount++;
+      }
+    }
+
+    if (validScoresCount > 0) {
+      avgOverall = Math.round(totalOverall / validScoresCount);
+      avgEffectiveness = Math.round(totalEffectiveness / validScoresCount);
+      avgEfficiency = Math.round(totalEfficiency / validScoresCount);
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="p-8">
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Team Analytics</h1>
         <p className="text-gray-600">
-          {currentUserData.role === 'admin'
+          {(currentUserData as any).role === 'admin'
             ? 'All Users'
-            : `Department: ${currentUserData.department || 'Unassigned'}`}
+            : `Department: ${(currentUserData as any).department || 'Unassigned'}`}
         </p>
         {error && (
           <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md border border-red-200">
@@ -88,6 +153,29 @@ export default async function TeamDashboardPage() {
           </div>
         )}
       </header>
+
+      {teamMembers.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <ScoreCard
+            title="Avg Team Score"
+            score={avgOverall}
+            maxScore={100}
+            color="blue"
+          />
+          <ScoreCard
+            title="Avg Effectiveness"
+            score={avgEffectiveness}
+            maxScore={100}
+            color="green"
+          />
+          <ScoreCard
+            title="Avg Efficiency"
+            score={avgEfficiency}
+            maxScore={100}
+            color="purple"
+          />
+        </div>
+      )}
 
       <TeamTable members={teamMembers} />
     </div>

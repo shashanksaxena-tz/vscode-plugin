@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ScoreCard } from "@/components/ScoreCard";
 import { MetricsChart } from "@/components/MetricsChart";
 import { SuggestionsList } from "@/components/SuggestionsList";
+import { InsightsList } from "@/components/InsightsList";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -61,10 +62,18 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="p-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">My Copilot Analytics</h1>
-        <p className="text-gray-600">Welcome back, {user.email}</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">My Copilot Analytics</h1>
+            <p className="text-gray-600">Welcome back, {user.email}</p>
+          </div>
+          <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+            AI Engine: {String(process.env.NEXT_PUBLIC_LLM_PROVIDER || "anthropic").charAt(0).toUpperCase() + String(process.env.NEXT_PUBLIC_LLM_PROVIDER || "anthropic").slice(1)}
+          </div>
+        </div>
         {error && (
           <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md border border-red-200">
             {error}
@@ -113,9 +122,16 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Improvement Suggestions</h2>
-        <SuggestionsList suggestions={latestScore?.suggestions as string[] ?? []} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Improvement Suggestions</h2>
+          <SuggestionsList suggestions={latestScore?.suggestions as string[] ?? []} />
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Code Insights</h2>
+          <InsightsList insights={latestScore?.insights as string[] ?? []} />
+        </div>
       </div>
     </div>
   );
