@@ -2,31 +2,29 @@
 
 ## Context
 **Project**: Copilot Analytics & Coaching Platform
-**Date**: January 21, 2026
-**Agent**: Jules (Session 26)
+**Date**: March 31, 2026
+**Agent**: Jules (Session 49)
 
 ## Achievements
-- **Dashboard**:
-    - Implemented `analytics-dashboard/src/app/dashboard/team/page.tsx` (Manager View) which filters team members by department.
-    - Created `analytics-dashboard/src/components/TeamTable.tsx` to display team metrics.
-    - Added unit tests for Manager Dashboard and Team Table.
-    - Verified frontend visualization using Playwright.
-    - Upgraded Next.js to `14.2.23` to address security vulnerabilities.
-- **CI/CD**:
-    - Added `test-intellij-plugin` job to `.github/workflows/ci.yml` using Java 21.
-    - Verified Gradle build and tests pass locally.
+- **Backend (Batch Processor)**:
+    - Implemented the `weeklyDigest` job (`batch-processor/src/jobs/weeklyDigest.ts`) to fetch `quality_scores` from the current and previous week and send a detailed summary email to users with score comparisons, insights, and actionable tips.
+    - Included comprehensive unit tests for `weeklyDigest.test.ts` testing query error scenarios, scoring change calculations, and valid/invalid email targets.
+    - Registered and scheduled the `weeklyDigest` job to run every Monday at 8 AM in `batch-processor/src/index.ts`.
+- **Verification**:
+    - Verified that existing and new tests in `batch-processor` pass successfully.
 
 ## State of Play
 - **Codebase**:
-    - Dashboard now has Developer, Manager, and Admin views implemented and tested.
-    - CI/CD covers all 5 components: Dashboard, Batch Processor, VS Code Extension, Cursor Hooks, IntelliJ Plugin.
-- **Environment**: "Diff size is unusually large" warning persists.
-- **Missing Components**:
-    - None identified in current scope.
+    - Dashboard now supports full cohort member UI management (from previous session).
+    - Batch Processor now supports the Weekly Email Digest via `EmailService`.
+- **Environment**:
+    - Docker execution remains restricted, preventing local end-to-end runtime verification.
+    - Full stack integration verification is pending deployment or a capable environment.
 
 ## Next Steps for Next Agent
-1.  **End-to-End Verification**:
-    - Run `docker compose up` in a capable environment to verify full system integration (Dashboard + Batch Processor + Supabase).
-    - Verify data flow from extensions to Supabase to Dashboard.
-2.  **Deployment**:
-    - Prepare deployment scripts or configuration for staging environment.
+1.  **Deployment**:
+    - Proceed with staging deployment using the consolidated scripts (`scripts/deploy_staging.sh`) if credentials and environment access are available.
+2.  **Runtime Verification**:
+    - Once deployed or in a capable environment, verify the weekly digest email sending behavior (e.g. force-triggering it via a test route or waiting for cron).
+3.  **Feature Expansion**:
+    - The design spec also calls for an "In-IDE Notifications" system (for critical alerts like high retry rates). This would involve updating the backend to emit notifications and the VSCode/IntelliJ extensions to consume them.
