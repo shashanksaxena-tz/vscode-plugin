@@ -44,6 +44,24 @@ open class SupabaseClient(
 
         return result?.overall_score ?: 0
     }
+
+    open suspend fun getUnreadNotifications(): List<IdeNotification> {
+        return client.from("notifications")
+            .select {
+                filter { eq("is_read", false) }
+            }
+            .decodeList<IdeNotification>()
+    }
+
+    open suspend fun markNotificationAsRead(id: String) {
+        client.from("notifications").update(
+            {
+                set("is_read", true)
+            }
+        ) {
+            filter { eq("id", id) }
+        }
+    }
 }
 
 @kotlinx.serialization.Serializable
@@ -54,4 +72,14 @@ data class QualityScore(
     val effectiveness_score: Int,
     val best_practices_score: Int,
     val efficiency_score: Int
+)
+
+@kotlinx.serialization.Serializable
+data class IdeNotification(
+    val id: String,
+    val user_id: String,
+    val message: String,
+    val type: String,
+    val is_read: Boolean,
+    val created_at: String
 )
