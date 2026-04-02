@@ -11,6 +11,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.ConcurrentLinkedDeque
 import com.copilotanalytics.settings.PluginSettings
 import org.jetbrains.annotations.VisibleForTesting
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 
 @Service(Service.Level.APP)
 class TelemetryService {
@@ -45,6 +47,36 @@ class TelemetryService {
                 delay(30_000) // 30 seconds
                 flush()
             }
+        }
+
+        // Start notification polling timer
+        scope.launch {
+            while (isActive) {
+                pollNotifications(project)
+                delay(300_000) // 5 minutes
+            }
+        }
+    }
+
+    private suspend fun pollNotifications(project: Project) {
+        try {
+            val notifications = supabaseClient?.getUnreadNotifications() ?: return
+            for (notification in notifications) {
+                val type = if (notification.type == "critical_alert") {
+                    NotificationType.WARNING
+                } else {
+                    NotificationType.INFORMATION
+                }
+
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup("Copilot Analytics Notifications")
+                    .createNotification("Copilot Analytics", notification.message, type)
+                    .notify(project)
+
+                supabaseClient?.markNotificationAsRead(notification.id)
+            }
+        } catch (e: Exception) {
+            println("Failed to poll notifications: ${e.message}")
         }
     }
 
