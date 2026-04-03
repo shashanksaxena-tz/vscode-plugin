@@ -111,6 +111,35 @@ export interface Database {
         Insert: Omit<Database["public"]["Tables"]["cohorts"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["cohorts"]["Insert"]>;
       };
+      cohort_members: {
+        Row: {
+          cohort_id: string;
+          user_id: string;
+          joined_at: string;
+        };
+        Insert: {
+          cohort_id: string;
+          user_id: string;
+          joined_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["cohort_members"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "cohort_members_cohort_id_fkey";
+            columns: ["cohort_id"];
+            isOneToOne: false;
+            referencedRelation: "cohorts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cohort_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["email"];
+          }
+        ];
+      };
       audit_logs: {
         Row: {
           id: string;

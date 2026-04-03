@@ -1,0 +1,21 @@
+
+> analytics-dashboard@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.23
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+ ✓ Ready in 2.3s
+ ○ Compiling /dashboard/cohorts ...
+ ✓ Compiled /dashboard/cohorts in 7.8s (870 modules)
+ ✓ Compiled in 745ms (236 modules)
+ GET /dashboard/cohorts 307 in 8565ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 8.6s (1642 modules)
+ GET /login 200 in 8971ms
