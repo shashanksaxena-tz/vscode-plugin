@@ -17,23 +17,39 @@ export interface Database {
           timestamp: string;
           event_type: string;
           platform: string;
-          model?: string;
-          prompt_encrypted?: string;
-          response_encrypted?: string;
-          metadata: any;
+          model: string | null;
+          prompt_encrypted: string | null;
+          response_encrypted: string | null;
+          metadata: Json;
           created_at: string;
         };
         Insert: {
+          id?: string;
           user_id: string;
           session_id: string;
           timestamp: string;
           event_type: string;
           platform: string;
-          model?: string;
-          prompt_encrypted?: string;
-          response_encrypted?: string;
-          metadata: any;
+          model?: string | null;
+          prompt_encrypted?: string | null;
+          response_encrypted?: string | null;
+          metadata?: Json;
+          created_at?: string;
         };
+        Update: {
+          id?: string;
+          user_id?: string;
+          session_id?: string;
+          timestamp?: string;
+          event_type?: string;
+          platform?: string;
+          model?: string | null;
+          prompt_encrypted?: string | null;
+          response_encrypted?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       quality_scores: {
         Row: {
@@ -46,7 +62,84 @@ export interface Database {
           efficiency_score: number;
           created_at: string;
         };
+        Insert: {
+          id?: string;
+          user_id: string;
+          week_start_date: string;
+          overall_score: number;
+          effectiveness_score: number;
+          best_practices_score: number;
+          efficiency_score: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          week_start_date?: string;
+          overall_score?: number;
+          effectiveness_score?: number;
+          best_practices_score?: number;
+          efficiency_score?: number;
+          created_at?: string;
+        };
+        Relationships: [];
       };
+      cohorts: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          criteria: Json;
+          member_count: number;
+          coaching_plan: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["cohorts"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["cohorts"]["Insert"]>;
+        Relationships: [];
+      };
+      cohort_members: {
+        Row: {
+          cohort_id: string;
+          user_id: string;
+          joined_at: string;
+        };
+        Insert: {
+          cohort_id: string;
+          user_id: string;
+          joined_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["cohort_members"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "cohort_members_cohort_id_fkey";
+            columns: ["cohort_id"];
+            isOneToOne: false;
+            referencedRelation: "cohorts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cohort_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["email"];
+          }
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 }
