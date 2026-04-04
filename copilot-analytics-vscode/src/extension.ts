@@ -60,6 +60,29 @@ export async function activate(context: vscode.ExtensionContext) {
       );
   }
 
+  // Poll for notifications every 5 minutes
+  const pollNotifications = async () => {
+      try {
+          const notifications = await supabase.getUnreadNotifications();
+          for (const notification of notifications) {
+              if (notification.type === 'critical_alert') {
+                  vscode.window.showWarningMessage(notification.message);
+              } else {
+                  vscode.window.showInformationMessage(notification.message);
+              }
+              await supabase.markNotificationAsRead(notification.id);
+          }
+      } catch (e) {
+          console.error('Error polling notifications:', e);
+      }
+  };
+
+  const notificationInterval = setInterval(pollNotifications, 5 * 60 * 1000);
+  context.subscriptions.push({ dispose: () => clearInterval(notificationInterval) });
+
+  // Initial poll
+  pollNotifications();
+
   // Command to show score
   context.subscriptions.push(
     vscode.commands.registerCommand('copilot-analytics.showScore', async () => {

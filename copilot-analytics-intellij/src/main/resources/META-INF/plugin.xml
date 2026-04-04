@@ -26,6 +26,10 @@
         <!-- Startup activity -->
         <postStartupActivity
             implementation="com.copilotanalytics.CopilotAnalyticsStartup"/>
+
+        <notificationGroup id="Copilot Analytics Notifications"
+                           displayType="BALLOON"
+                           key="notification.group.copilot.analytics"/>
     </extensions>
 
     <applicationListeners>
