@@ -111,6 +111,19 @@ export interface Database {
         Insert: Omit<Database["public"]["Tables"]["cohorts"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["cohorts"]["Insert"]>;
       };
+      cohort_members: {
+        Row: {
+          cohort_id: string;
+          user_id: string;
+          joined_at: string;
+        };
+        Insert: {
+          cohort_id: string;
+          user_id: string;
+          joined_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["cohort_members"]["Insert"]>;
+      };
       audit_logs: {
         Row: {
           id: string;
@@ -131,6 +144,25 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["audit_logs"]["Insert"]>;
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          message: string;
+          type: string;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          message: string;
+          type: string;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Insert"]>;
       };
     };
   };
